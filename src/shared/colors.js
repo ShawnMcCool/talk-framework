@@ -1,14 +1,25 @@
+// Palette derived from media-centaur code visualizer.
+// Deep navy base with saturated blue/cyan/orange accents.
+//
+// HSL building hues from the visualizer (S:0.55 L:0.48), available for future scene use:
+//   Blue:   hsl(216, 55%, 48%)
+//   Teal:   hsl(162, 55%, 48%)
+//   Amber:  hsl(36, 55%, 48%)
+//   Purple: hsl(288, 55%, 48%)
+//   Red:    hsl(0, 55%, 48%)
+//   Green:  hsl(108, 55%, 48%)
+
 export const colors = {
-  bg: '#4a5068',
-  bgDark: '#383d52',
-  bgDarker: '#2d3142',
-  text: '#e8e8f0',
-  textMuted: '#9a9cb8',
-  accent: '#5fb4a2',
-  accentWarm: '#f2b866',
-  accentOrange: '#e8915a',
-  failure: '#e86b6b',
-  beam: '#8fa4d4',
+  bg: '#1a1a2e',
+  bgDark: '#141428',
+  bgDarker: '#0f0f1e',
+  text: '#e8e8f8',
+  textMuted: '#99aacc',
+  accent: '#aaccff',
+  accentWarm: '#ff9944',
+  accentOrange: '#ff8844',
+  failure: '#ff3366',
+  beam: '#44bbff',
 };
 
 export function applyColorVars(el) {
