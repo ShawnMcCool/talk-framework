@@ -3,6 +3,7 @@ import { createPalette } from './commands/palette.js';
 import { demoHtmlScene } from './scenes/demo-html/scene.js';
 import { demoThreeScene } from './scenes/demo-three/scene.js';
 import { applyColorVars } from './shared/colors.js';
+import { createDebugOverlay } from './debug/overlay.js';
 
 const stage = document.getElementById('stage');
 applyColorVars(document.documentElement);
@@ -41,6 +42,18 @@ function setup() {
       title: `Scene ${i + 1}: ${scene.title}`,
       action: () => engine.goToScene(i),
     });
+  });
+
+  const debug = createDebugOverlay(
+    () => engine.getPosition(),
+    () => engine.getDeck(),
+  );
+
+  palette.register({
+    id: 'toggle-debug',
+    title: 'Toggle Debug Overlay',
+    dev: true,
+    action: () => debug.toggle(),
   });
 
   engine.start();
