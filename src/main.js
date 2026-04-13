@@ -1,6 +1,7 @@
 import { createEngine } from './engine/engine.js';
 import { createPalette } from './commands/palette.js';
 import { demoHtmlScene } from './scenes/demo-html/scene.js';
+import { demoThreeScene } from './scenes/demo-three/scene.js';
 import { applyColorVars } from './shared/colors.js';
 
 const stage = document.getElementById('stage');
@@ -8,7 +9,7 @@ applyColorVars(document.documentElement);
 
 const engine = createEngine({
   stage,
-  sceneDefs: [demoHtmlScene],
+  sceneDefs: [demoHtmlScene, demoThreeScene],
 });
 
 const palette = createPalette({ devMode: true });
