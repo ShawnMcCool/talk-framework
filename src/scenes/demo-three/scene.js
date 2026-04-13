@@ -1,11 +1,13 @@
 import * as THREE from 'three';
 import { createThreeRenderer } from '../../rendering/three-scene.js';
+import { playTimeline } from '../../animation/timeline.js';
 import { colors } from '../../shared/colors.js';
 
 let renderer = null;
 let box1 = null;
 let box2 = null;
 let threeCtx = null;
+let currentAnimation = null;
 
 const slideData = [
   {
@@ -16,6 +18,10 @@ const slideData = [
       box2.visible = false;
       renderer.markDirty();
     },
+    animate(stepIndex, done) {
+      this.resolve();
+      done();
+    },
   },
   {
     stepCount: 2,
@@ -25,6 +31,27 @@ const slideData = [
       box2.visible = stepIndex >= 1;
       box2.position.set(-1, 0, 0);
       renderer.markDirty();
+    },
+    animate(stepIndex, done) {
+      if (stepIndex === 0) {
+        currentAnimation = playTimeline(
+          [{ property: 'box1x', from: -1, to: 1, delay: 0, duration: 600 }],
+          (vals) => {
+            box1.position.x = vals.box1x;
+            renderer.markDirty();
+          },
+          () => {
+            box2.visible = false;
+            currentAnimation = null;
+            done();
+          },
+        );
+      } else {
+        box2.visible = true;
+        box2.position.set(-1, 0, 0);
+        renderer.markDirty();
+        done();
+      }
     },
   },
 ];
@@ -48,10 +75,14 @@ export const demoThreeScene = {
 
     threeCtx.scene.background = new THREE.Color(colors.bg);
 
-    return { threeCtx };
+    return {};
   },
 
   destroy() {
+    if (currentAnimation) {
+      currentAnimation.resolve();
+      currentAnimation = null;
+    }
     if (renderer) renderer.destroy();
     renderer = null;
     box1 = null;
@@ -60,11 +91,18 @@ export const demoThreeScene = {
   },
 
   resolveToSlide(ctx, slideIndex, stepIndex) {
+    if (currentAnimation) {
+      currentAnimation.resolve();
+      currentAnimation = null;
+    }
     slideData[slideIndex].resolve(stepIndex);
   },
 
   animateToSlide(ctx, slideIndex, stepIndex, done) {
-    slideData[slideIndex].resolve(stepIndex);
-    done();
+    if (currentAnimation) {
+      currentAnimation.resolve();
+      currentAnimation = null;
+    }
+    slideData[slideIndex].animate(stepIndex, done);
   },
 };
