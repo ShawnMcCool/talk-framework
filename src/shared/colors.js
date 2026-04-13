@@ -20,6 +20,8 @@ export const colors = {
   accentOrange: '#ff8844',
   failure: '#ff3366',
   beam: '#44bbff',
+  green: '#44dd88',
+  purple: '#aa77ff',
 };
 
 export function applyColorVars(el) {
