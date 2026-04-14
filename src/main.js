@@ -2,6 +2,10 @@ import { createEngine } from './engine/engine.js';
 import { createPalette } from './commands/palette.js';
 import { hotTakesScene } from './scenes/07-hot-takes/scene.js';
 import { deepDiveScene } from './scenes/08-deep-dive/scene.js';
+import { whyBeamScene } from './scenes/09-why-beam/scene.js';
+import { processesScene } from './scenes/10-processes/scene.js';
+import { faultToleranceScene } from './scenes/11-fault-tolerance/scene.js';
+import { codeExampleScene } from './scenes/12-code-example/scene.js';
 import { applyColorVars } from './shared/colors.js';
 import { createDebugOverlay } from './debug/overlay.js';
 
@@ -13,8 +17,12 @@ let palette = null;
 
 function buildSceneDefs() {
   return [
+    whyBeamScene,
     hotTakesScene,
+    processesScene,
+    codeExampleScene,
     deepDiveScene,
+    faultToleranceScene,
   ];
 }
 
