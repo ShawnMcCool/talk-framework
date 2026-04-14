@@ -77,6 +77,7 @@ export function createThreeRenderer() {
 
     getScene() { return scene; },
     getCamera() { return camera; },
+    setCamera(cam) { camera = cam; },
 
     markDirty() {
       needsRender = true;

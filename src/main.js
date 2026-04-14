@@ -1,12 +1,7 @@
 import { createEngine } from './engine/engine.js';
 import { createPalette } from './commands/palette.js';
-import { beamVmScene } from './scenes/07-beam-vm/scene.js';
-import { processMessagingScene } from './scenes/08-process-messaging/scene.js';
-import { mailboxExecutionScene } from './scenes/09-mailbox-execution/scene.js';
-import { executionModelScene } from './scenes/10-execution-model/scene.js';
-import { linksScene } from './scenes/11-links/scene.js';
-import { monitorsScene } from './scenes/12-monitors/scene.js';
-import { supervisorsScene } from './scenes/13-supervisors/scene.js';
+import { hotTakesScene } from './scenes/07-hot-takes/scene.js';
+import { deepDiveScene } from './scenes/08-deep-dive/scene.js';
 import { applyColorVars } from './shared/colors.js';
 import { createDebugOverlay } from './debug/overlay.js';
 
@@ -18,13 +13,8 @@ let palette = null;
 
 function buildSceneDefs() {
   return [
-    beamVmScene,
-    processMessagingScene,
-    mailboxExecutionScene,
-    executionModelScene,
-    linksScene,
-    monitorsScene,
-    supervisorsScene,
+    hotTakesScene,
+    deepDiveScene,
   ];
 }
 
