@@ -1,6 +1,7 @@
 import { createSvgScene } from '../../svg-scenes/scene-factory.js';
 import { colors } from '../../shared/colors.js';
 import { cornerLoop } from '../../shared/corner-loop.js';
+import { createCurvedArrow } from '../../shared/svg/curved-arrow.js';
 import {
   NODE_POSITIONS,
   SLIDE_STATES,
@@ -137,38 +138,17 @@ export const cycleScene = createSvgScene({
       tlLabelEls.set(name, label);
     });
 
-    // Curl arc (hidden until slide 5). Drawn as a quadratic Bezier up and over
-    // from the Rewrite dot back to the Excited dot.
-    const curl = document.createElementNS(SVG_NS, 'path');
-    const xStart = timelineDotX(TIMELINE_DOTS.length - 1);  // rewrite
-    const xEnd = timelineDotX(0);                            // excited
-    const cpx = (xStart + xEnd) / 2;
-    const cpy = TL_Y - 120;
-    const curlPath = `M ${xStart} ${TL_Y} Q ${cpx} ${cpy} ${xEnd} ${TL_Y}`;
-    setAttrs(curl, {
-      d: curlPath,
-      fill: 'none',
+    // Curl arc (hidden until slide 5): quadratic Bezier from Rewrite back to
+    // Excited. Arrowhead is tangent-oriented and sits just outside the Excited
+    // dot (to.r drives that gap) so the tip is visually clear of the circle.
+    const curlArrow = createCurvedArrow({
+      from: { x: timelineDotX(TIMELINE_DOTS.length - 1), y: TL_Y },
+      to:   { x: timelineDotX(0), y: TL_Y, r: TL_DOT_R },
+      arcHeight: 120,
       stroke: colors.accent,
-      'stroke-width': 2.5,
-      opacity: 0,
+      strokeWidth: 2.5,
     });
-    layers.timeline.appendChild(curl);
-
-    // Arrowhead near the excited end of the curl
-    const arrow = document.createElementNS(SVG_NS, 'path');
-    setAttrs(arrow, {
-      d: `M ${xEnd - 8} ${TL_Y - 8} L ${xEnd} ${TL_Y} L ${xEnd - 8} ${TL_Y + 8}`,
-      fill: 'none',
-      stroke: colors.accent,
-      'stroke-width': 2.5,
-      'stroke-linecap': 'round',
-      'stroke-linejoin': 'round',
-      opacity: 0,
-    });
-    layers.timeline.appendChild(arrow);
-
-    // Compute curl length for stroke-dasharray animation
-    const curlLength = curl.getTotalLength ? curl.getTotalLength() : 600;
+    layers.timeline.appendChild(curlArrow.group);
 
     // --- Stamp: "START OVER" for slide 4 ---
     const stampG = document.createElementNS(SVG_NS, 'g');
@@ -202,7 +182,7 @@ export const cycleScene = createSvgScene({
     layers.stamp.appendChild(stampG);
 
     return {
-      nodeEls, edgeEls, tlDotEls, tlLabelEls, tlLine, curl, arrow, curlLength,
+      nodeEls, edgeEls, tlDotEls, tlLabelEls, tlLine, curlArrow,
       stampG, handedOffToCornerLoop: false,
     };
   },
@@ -241,15 +221,7 @@ export const cycleScene = createSvgScene({
     }
 
     // Curl
-    if (state.timelineCurled) {
-      objects.curl.setAttribute('opacity', 1);
-      objects.curl.setAttribute('stroke-dasharray', '');
-      objects.curl.setAttribute('stroke-dashoffset', '0');
-      objects.arrow.setAttribute('opacity', 1);
-    } else {
-      objects.curl.setAttribute('opacity', 0);
-      objects.arrow.setAttribute('opacity', 0);
-    }
+    objects.curlArrow.resolveVisible(state.timelineCurled);
 
     // Stamp — force to end of SVG DOM to guarantee z-top over nodes/edges/timeline.
     objects.stampG.setAttribute('opacity', state.stampStartOver ? 1 : 0);
@@ -334,7 +306,7 @@ export const cycleScene = createSvgScene({
     }
 
     // Curl: if entering curled state, animate the stroke-dasharray reveal
-    const isCurlEntering = state.timelineCurled && parseFloat(objects.curl.getAttribute('opacity') || 0) < 1;
+    const isCurlEntering = state.timelineCurled && parseFloat(objects.curlArrow.group.getAttribute('opacity') || 0) < 1;
 
     const apply = (v) => {
       for (const [name, { group }] of objects.nodeEls) {
@@ -348,20 +320,15 @@ export const cycleScene = createSvgScene({
 
     const runCurlThenDone = () => {
       if (!isCurlEntering) { done(); return; }
-      // Reveal the curl by animating stroke-dashoffset from length → 0
-      objects.curl.setAttribute('opacity', 1);
-      objects.curl.setAttribute('stroke-dasharray', objects.curlLength);
-      objects.curl.setAttribute('stroke-dashoffset', objects.curlLength);
-      playTimeline(
-        [{ property: 'off', from: objects.curlLength, to: 0, delay: 0, duration: 900 }],
-        (v) => objects.curl.setAttribute('stroke-dashoffset', v.off),
-        () => {
-          objects.arrow.setAttribute('opacity', 1);
+      objects.curlArrow.reveal({
+        playTimeline,
+        duration: 900,
+        done: () => {
           // Handoff: bring up the cornerLoop in the corner
           cornerLoop.show({ at: 'corner', highlight: null });
           setTimeout(done, 400);
         },
-      );
+      });
     };
 
     if (tweens.length === 0) {
@@ -372,8 +339,7 @@ export const cycleScene = createSvgScene({
 
     // If we're leaving the curled state (e.g. navigating back), ensure the curl hides.
     if (!state.timelineCurled) {
-      objects.curl.setAttribute('opacity', 0);
-      objects.arrow.setAttribute('opacity', 0);
+      objects.curlArrow.resolveVisible(false);
     }
 
     // Hide cornerLoop when not on the final slide

@@ -18,15 +18,9 @@ describe('SLIDE_STATES', () => {
     assert.equal(SLIDE_STATES[0].nodes.length, 3);
   });
 
-  it('slide 5 (Day 1 again) has same node set as slide 0', () => {
-    assert.deepEqual(
-      [...SLIDE_STATES[5].nodes].sort(),
-      [...SLIDE_STATES[0].nodes].sort(),
-    );
-  });
-
-  it('slide 5 has same edges as slide 0', () => {
-    assert.deepEqual(SLIDE_STATES[5].edges, SLIDE_STATES[0].edges);
+  it('slide 5 (curl beat) has an empty graph', () => {
+    assert.deepEqual(SLIDE_STATES[5].nodes, []);
+    assert.deepEqual(SLIDE_STATES[5].edges, []);
   });
 
   it('slide 4 (Rewrite) has the START OVER stamp', () => {

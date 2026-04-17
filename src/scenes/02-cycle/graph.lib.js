@@ -110,10 +110,11 @@ const SLIDE_4 = {
   timelineDot: 'rewrite',
 };
 
-// Slide 5 — Day 1 again: graph resets, timeline curls into a loop
+// Slide 5 — Curl beat: graph is empty; the timeline curls back into a loop.
+// The curl alone carries the meaning — the tiny Day-1 graph would be noise here.
 const SLIDE_5 = {
-  nodes: ['user', 'post', 'comment'],
-  edges: [e('user', 'post'), e('post', 'comment')],
+  nodes: [],
+  edges: [],
   redEdges: [],
   stampStartOver: false,
   timelineDot: 'excited',
