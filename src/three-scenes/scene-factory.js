@@ -10,26 +10,15 @@ import { colors as defaultColors } from '../shared/colors.js';
  *   - animation cancellation (playTimeline + setTimeout)
  *   - optional per-frame tick loop
  *
- * Configuration:
- *   title:       string — palette title
- *   slides:      [{ stepCount }]
- *   background?: hex color for scene.background (default colors.bg)
- *   setup(ctx):  returns a user-defined `objects` handle; ctx has
- *                  { scene, camera, renderer, markDirty }
- *   onTick?(objects, ctx):
- *                per-frame callback; ctx has { markDirty }. If provided, a
- *                requestAnimationFrame loop is started and stopped by the
- *                factory. Return false to stop the loop (rare).
- *   resolveStep(objects, ctx):
- *                instant state application. ctx has { slideIndex, stepIndex,
- *                renderer, markDirty }.
- *   animateStep(objects, ctx):
- *                animated transition. ctx has { slideIndex, stepIndex,
- *                renderer, markDirty, playTimeline, setTimeout, done }.
- *                playTimeline and setTimeout injected here are automatically
- *                cancelled on next animateStep call or on destroy.
- *   onDestroy?(objects):
- *                optional extra teardown beyond renderer cleanup.
+ * `playTimeline` and `setTimeout` injected into `animateStep` are tracked —
+ * they're cancelled automatically on the next `animateStep` call or on
+ * destroy. See `docs/architecture/animation.md` for the cancellation model.
+ *
+ * See `src/types.js` for the full shape of every context argument.
+ *
+ * @template Objects
+ * @param {import('../types.js').ThreeSceneConfig<Objects>} config
+ * @returns {import('../types.js').SceneModule}
  */
 export function createThreeScene(config) {
   const {

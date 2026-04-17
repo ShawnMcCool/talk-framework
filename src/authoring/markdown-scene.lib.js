@@ -213,7 +213,8 @@ function parseSlideBlocks(lines) {
 /**
  * Full parse of a markdown scene source.
  * @param {string} source
- * @param {object} [colorsMap] map of {{tokens}} → replacement strings
+ * @param {Record<string, string>} [colorsMap] map of {{tokens}} → replacement strings
+ * @returns {import('../types.js').ParsedMarkdownScene}
  */
 export function parseMarkdownScene(source, colorsMap = {}) {
   const interpolated = interpolate(source, colorsMap);

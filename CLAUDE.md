@@ -125,3 +125,10 @@ The factory handles renderer creation/destruction, scene background, animation c
 ## Planned Scenes
 
 1. Title (HTML) | 2. Introduction | 3. Mission | 4. Desired Properties | 5. Excluded Concerns | 6. Erlang and Elixir | 7. The BEAM VM (Three.js) | 8. Process Messaging (Three.js) | 9. Mailbox & Execution (Three.js) | 10. Execution Model (Three.js) | 11. Links (Three.js) | 12. Monitors (Three.js) | 13. Supervisors (Three.js)
+
+## See also
+
+- `src/types.js` — JSDoc typedefs for every scene / factory contract. Reference them via `/** @type {import('.../types.js').SceneModule} */`.
+- `docs/architecture/` — per-layer one-pagers: `engine.md`, `rendering.md`, `animation.md`, `authoring.md`, `scenes.md`. Cover the *why* and the invariants behind each layer.
+- `docs/markdown-authoring.md` — complete frontmatter + block-syntax reference for markdown-authored scenes.
+- `docs/examples/minimal-markdown.md` and `docs/examples/minimal-three.js` — smallest functional scenes you can clone into `src/scenes/`.

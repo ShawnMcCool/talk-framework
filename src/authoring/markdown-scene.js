@@ -4,24 +4,16 @@ import { createSectionSlide } from '../section-slides/scene-factory.js';
 import { colors } from '../shared/colors.js';
 
 /**
- * Compile a markdown source string into a scene module.
+ * Compile a markdown source string into a scene module. See
+ * `docs/markdown-authoring.md` for the full frontmatter + block syntax
+ * reference, and `MarkdownFrontmatter` in `src/types.js` for the accepted
+ * frontmatter keys.
  *
- * Supported frontmatter:
- *   title (required) — scene title for palette + navigation
- *   type  — "content" (default) | "section"
- *   accent, subtitle, fontSize, letterStagger, colors.* — forwarded to factory
+ * `{{tokenName}}` in the source is replaced at compile time with
+ * `colors[tokenName]` from `src/shared/colors.js`.
  *
- * The body uses standard markdown with a few conventions:
- *   ---       — slide separator
- *   # / ## / ### — headings (level 1/2/3)
- *   - / *     — bullet list (whole list = one block)
- *   > quote   — blockquote (trailing "— attribution" line is captured)
- *   ```lang   — fenced code block
- *   :spacer:  — visual spacer (also :spacer lg:)
- *   !muted ...paragraph — render paragraph in muted style
- *
- * {{name}} tokens in the source are replaced with colors[name] at compile time,
- * so markdown authors can reference named palette colors without hardcoding hex.
+ * @param {string} source
+ * @returns {import('../types.js').SceneModule}
  */
 export function compileMarkdownScene(source) {
   const parsed = parseMarkdownScene(source, colors);

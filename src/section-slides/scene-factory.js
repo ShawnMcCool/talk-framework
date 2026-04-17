@@ -18,17 +18,12 @@ function rgba(hex, alpha) {
 }
 
 /**
- * Create a reusable 2D section slide scene.
+ * Create a reusable 2D section slide scene (large shimmering title, optional
+ * subtitle, animated letter-in intro).
  *
  * @param {string} title - Main heading text (required)
- * @param {object} opts
- * @param {string} opts.subtitle - Optional line below the title
- * @param {string} opts.accent - Hex color for rules, glow, shimmer, subtitle
- * @param {string} opts.bg - Background color
- * @param {string} opts.bgDark - Darker background for radial gradient center
- * @param {string} opts.text - Text color
- * @param {string} opts.fontSize - Title font size
- * @param {number} opts.letterStagger - ms between each letter animation
+ * @param {import('../types.js').SectionSlideOptions} [opts]
+ * @returns {import('../types.js').SceneModule}
  */
 export function createSectionSlide(title, {
   subtitle = null,

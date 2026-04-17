@@ -4,6 +4,10 @@
 
 const REQUIRED_METHODS = ['init', 'destroy', 'resolveToSlide', 'animateToSlide'];
 
+/**
+ * @param {import('../types.js').SceneModule[]} sceneDefs
+ * @returns {import('../types.js').ValidationReport[]}
+ */
 export function validateScenesLib(sceneDefs) {
   const reports = [];
   sceneDefs.forEach((scene, sceneIndex) => {

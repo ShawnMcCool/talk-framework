@@ -3,6 +3,8 @@ import { validateScenesLib } from './scene-validation.lib.js';
 /**
  * Run scene validation and log warnings. Never throws — a malformed
  * scene should be surfaced but shouldn't block the rest of the deck.
+ *
+ * @param {import('../types.js').SceneModule[]} sceneDefs
  */
 export function validateScenes(sceneDefs) {
   const reports = validateScenesLib(sceneDefs);

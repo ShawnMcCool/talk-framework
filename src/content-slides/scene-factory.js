@@ -6,21 +6,15 @@ let instanceCounter = 0;
 /**
  * Create a content slide scene from a declarative slide definition.
  *
- * @param {string} title - Scene title for palette/navigation
- * @param {Array} slides - Array of slide definitions
- * @param {object} opts - Optional color overrides
- *
  * Each slide is an array of "blocks" revealed progressively (one per step).
- * Step 0 shows block 0, step 1 shows blocks 0+1, etc.
+ * Step 0 shows block 0, step 1 shows blocks 0+1, etc. Accepted block shapes
+ * are defined by the `ContentBlock` union in `src/types.js`.
  *
- * Block types:
- *   { type: 'heading', text, level?, accent? }
- *   { type: 'bullets', items: [string...], accent? }
- *   { type: 'text', text, muted? }
- *   { type: 'code', code, language? }
- *   { type: 'quote', text, attribution? }
- *   { type: 'columns', left: [blocks], right: [blocks] }
- *   { type: 'spacer', size? }
+ * @param {string} title
+ * @param {import('../types.js').ContentBlock[][]} slides
+ *   Array of slides; each slide is an array of blocks.
+ * @param {import('../types.js').ContentSlideOptions} [opts]
+ * @returns {import('../types.js').SceneModule}
  */
 export function createContentSlide(title, slides, opts = {}) {
   const id = `cs-${instanceCounter++}`;
