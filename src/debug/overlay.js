@@ -57,6 +57,13 @@ export function createDebugOverlay(getPosition, getDeck, opts = {}) {
       }
     },
 
+    /** Force an immediate re-read of position/deck. */
+    refresh() {
+      if (!visible) return;
+      ensureEl();
+      update();
+    },
+
     isVisible() {
       return visible;
     },

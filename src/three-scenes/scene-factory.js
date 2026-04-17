@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { createThreeRenderer } from '../rendering/three-scene.js';
-import { playTimeline as rawPlayTimeline } from '../animation/timeline.js';
+import { createTrackedTimeline } from '../animation/tracked-timeline.js';
 import { colors as defaultColors } from '../shared/colors.js';
 
 /**
@@ -36,38 +36,10 @@ export function createThreeScene(config) {
   let threeCtx = null;
   let objects = null;
   let loopId = null;
-  let activeTimeline = null;
-  let activeTimeouts = new Set();
+  const tracker = createTrackedTimeline();
 
   function markDirty() {
     if (renderer) renderer.markDirty();
-  }
-
-  function cancelActive() {
-    if (activeTimeline) {
-      try { activeTimeline.resolve(); } catch (_) {}
-      activeTimeline = null;
-    }
-    for (const id of activeTimeouts) clearTimeout(id);
-    activeTimeouts.clear();
-  }
-
-  function trackedPlayTimeline(tweenDefs, applyFn, doneFn) {
-    const handle = rawPlayTimeline(tweenDefs, applyFn, () => {
-      if (activeTimeline === handle) activeTimeline = null;
-      doneFn();
-    });
-    activeTimeline = handle;
-    return handle;
-  }
-
-  function trackedSetTimeout(fn, ms) {
-    const id = setTimeout(() => {
-      activeTimeouts.delete(id);
-      fn();
-    }, ms);
-    activeTimeouts.add(id);
-    return id;
   }
 
   function startLoop() {
@@ -108,7 +80,7 @@ export function createThreeScene(config) {
 
     destroy() {
       stopLoop();
-      cancelActive();
+      tracker.cancelAll();
       if (onDestroy) {
         try { onDestroy(objects); } catch (err) { console.error(err); }
       }
@@ -119,7 +91,7 @@ export function createThreeScene(config) {
     },
 
     resolveToSlide(_ctx, slideIndex, stepIndex) {
-      cancelActive();
+      tracker.cancelAll();
       resolveStep(objects, {
         slideIndex,
         stepIndex,
@@ -130,7 +102,7 @@ export function createThreeScene(config) {
     },
 
     animateToSlide(_ctx, slideIndex, stepIndex, done) {
-      cancelActive();
+      tracker.cancelAll();
       let finished = false;
       const finish = () => {
         if (finished) return;
@@ -142,8 +114,8 @@ export function createThreeScene(config) {
         stepIndex,
         renderer,
         markDirty,
-        playTimeline: trackedPlayTimeline,
-        setTimeout: trackedSetTimeout,
+        playTimeline: tracker.playTimeline,
+        setTimeout: tracker.setTimeout,
         done: finish,
       });
     },

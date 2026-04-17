@@ -1,31 +1,37 @@
 #!/usr/bin/env bash
-# Start the dev server, wait for it, probe all JS modules for Vite errors, then stop.
-# Exit 0 if clean, 1 if any module has errors.
+# Probe every JS module for Vite import errors.
+# If a dev server is already running on :3000, probe it without touching docker.
+# Otherwise, start a temporary container, probe, stop it.
 
 set -euo pipefail
 
-COMPOSE_FILE="compose.yaml"
 PORT=3000
 MAX_WAIT=30
+STARTED_OWN_SERVER=0
 
-# Start the container (detached)
-docker compose up -d --build 2>&1 | tail -3
+# If something is already on :3000, probe it; otherwise start our own.
+if curl -sf "http://localhost:${PORT}" > /dev/null 2>&1; then
+  echo "Detected running server on :${PORT} — probing without disturbing it."
+else
+  STARTED_OWN_SERVER=1
+  echo "No server on :${PORT} — starting a temporary one."
+  docker compose up -d --build 2>&1 | tail -3
 
-# Wait for Vite to respond
-echo "Waiting for Vite on :${PORT}..."
-for i in $(seq 1 $MAX_WAIT); do
-  if curl -sf "http://localhost:${PORT}" > /dev/null 2>&1; then
-    echo "Vite ready after ${i}s"
-    break
-  fi
-  if [ "$i" = "$MAX_WAIT" ]; then
-    echo "TIMEOUT: Vite did not start within ${MAX_WAIT}s"
-    docker compose logs --tail=30
-    docker compose down > /dev/null 2>&1
-    exit 1
-  fi
-  sleep 1
-done
+  echo "Waiting for Vite on :${PORT}..."
+  for i in $(seq 1 $MAX_WAIT); do
+    if curl -sf "http://localhost:${PORT}" > /dev/null 2>&1; then
+      echo "Vite ready after ${i}s"
+      break
+    fi
+    if [ "$i" = "$MAX_WAIT" ]; then
+      echo "TIMEOUT: Vite did not start within ${MAX_WAIT}s"
+      docker compose logs --tail=30
+      docker compose down > /dev/null 2>&1
+      exit 1
+    fi
+    sleep 1
+  done
+fi
 
 # Collect all JS entry points
 ERRORS=0
@@ -37,7 +43,6 @@ for mod in $MODULES; do
   RESP=$(curl -s "http://localhost:${PORT}/${mod}")
   if echo "$RESP" | grep -q "DOCTYPE"; then
     echo "  FAIL: $mod"
-    # Extract error message
     echo "$RESP" | grep -oP '"message":"[^"]*"' | head -1 | sed 's/"message":"//;s/"$//' | sed 's/^/    /'
     ERRORS=$((ERRORS + 1))
   else
@@ -45,13 +50,13 @@ for mod in $MODULES; do
   fi
 done
 
-# Also check Vite server logs for errors
-echo ""
-echo "Vite server logs (last 20 lines):"
-docker compose logs --tail=20 2>&1 | grep -v "^$"
-
-# Stop
-docker compose down > /dev/null 2>&1
+# Only touch docker if we started it ourselves.
+if [ "$STARTED_OWN_SERVER" = "1" ]; then
+  echo ""
+  echo "Vite server logs (last 20 lines):"
+  docker compose logs --tail=20 2>&1 | grep -v "^$"
+  docker compose down > /dev/null 2>&1
+fi
 
 echo ""
 if [ $ERRORS -gt 0 ]; then

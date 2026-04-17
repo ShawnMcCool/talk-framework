@@ -1,13 +1,13 @@
 import * as THREE from 'three';
 import { createThreeRenderer } from '../../rendering/three-scene.js';
-import { playTimeline } from '../../animation/timeline.js';
+import { createTrackedTimeline } from '../../animation/tracked-timeline.js';
 import { colors } from '../../shared/colors.js';
 
 let renderer = null;
 let box1 = null;
 let box2 = null;
 let threeCtx = null;
-let currentAnimation = null;
+const tracker = createTrackedTimeline();
 
 const slideData = [
   {
@@ -34,7 +34,7 @@ const slideData = [
     },
     animate(stepIndex, done) {
       if (stepIndex === 0) {
-        currentAnimation = playTimeline(
+        tracker.playTimeline(
           [{ property: 'box1x', from: -1, to: 1, delay: 0, duration: 600 }],
           (vals) => {
             box1.position.x = vals.box1x;
@@ -42,7 +42,6 @@ const slideData = [
           },
           () => {
             box2.visible = false;
-            currentAnimation = null;
             done();
           },
         );
@@ -79,10 +78,7 @@ export const demoThreeScene = {
   },
 
   destroy() {
-    if (currentAnimation) {
-      currentAnimation.resolve();
-      currentAnimation = null;
-    }
+    tracker.cancelAll();
     if (renderer) renderer.destroy();
     renderer = null;
     box1 = null;
@@ -91,18 +87,12 @@ export const demoThreeScene = {
   },
 
   resolveToSlide(ctx, slideIndex, stepIndex) {
-    if (currentAnimation) {
-      currentAnimation.resolve();
-      currentAnimation = null;
-    }
+    tracker.cancelAll();
     slideData[slideIndex].resolve(stepIndex);
   },
 
   animateToSlide(ctx, slideIndex, stepIndex, done) {
-    if (currentAnimation) {
-      currentAnimation.resolve();
-      currentAnimation = null;
-    }
+    tracker.cancelAll();
     slideData[slideIndex].animate(stepIndex, done);
   },
 };

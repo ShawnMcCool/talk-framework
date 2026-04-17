@@ -1,12 +1,12 @@
 import * as THREE from 'three';
 import { createThreeRenderer } from '../../rendering/three-scene.js';
-import { playTimeline } from '../../animation/timeline.js';
+import { createTrackedTimeline } from '../../animation/tracked-timeline.js';
 import { colors } from '../../shared/colors.js';
 import { createTextSprite, glowMaterial } from '../scene-helpers.js';
 
 let renderer = null;
 let threeCtx = null;
-let currentAnimation = null;
+const tracker = createTrackedTimeline();
 let loopId = null;
 
 let gear1 = null;
@@ -159,7 +159,7 @@ const slideData = [
         stateCube.visible = true;
         stateCube.material.opacity = 0;
         stateCube.material.transparent = true;
-        currentAnimation = playTimeline(
+        tracker.playTimeline(
           [{ property: 'opacity', from: 0, to: 1, delay: 0, duration: 500 }],
           (vals) => {
             stateCube.material.opacity = vals.opacity;
@@ -167,23 +167,22 @@ const slideData = [
           },
           () => {
             stateCube.material.transparent = false;
-            currentAnimation = null;
             done();
           },
         );
       } else if (stepIndex === 2) {
         stateLabel.visible = true;
-        currentAnimation = playTimeline(
+        tracker.playTimeline(
           [{ property: 'shellOpacity', from: 0, to: 0.15, delay: 0, duration: 800 }],
           (vals) => {
             shell.material.opacity = vals.shellOpacity;
             renderer.markDirty();
           },
-          () => { currentAnimation = null; done(); },
+          done,
         );
       } else if (stepIndex === 3) {
         crashed = true;
-        currentAnimation = playTimeline(
+        tracker.playTimeline(
           [
             { property: 'jitter', from: 0, to: 0.08, delay: 0, duration: 300 },
             { property: 'red', from: 0, to: 1, delay: 0, duration: 500 },
@@ -199,7 +198,7 @@ const slideData = [
             shellCracks.material.opacity = vals.cracks;
             renderer.markDirty();
           },
-          () => { currentAnimation = null; done(); },
+          done,
         );
       }
     },
@@ -226,7 +225,7 @@ export const executionModelScene = {
 
   destroy() {
     stopLoop();
-    if (currentAnimation) { currentAnimation.resolve(); currentAnimation = null; }
+    tracker.cancelAll();
     if (renderer) renderer.destroy();
     renderer = null;
     threeCtx = null;
@@ -235,12 +234,12 @@ export const executionModelScene = {
   },
 
   resolveToSlide(ctx, slideIndex, stepIndex) {
-    if (currentAnimation) { currentAnimation.resolve(); currentAnimation = null; }
+    tracker.cancelAll();
     slideData[slideIndex].resolve(stepIndex);
   },
 
   animateToSlide(ctx, slideIndex, stepIndex, done) {
-    if (currentAnimation) { currentAnimation.resolve(); currentAnimation = null; }
+    tracker.cancelAll();
     slideData[slideIndex].animate(stepIndex, done);
   },
 };

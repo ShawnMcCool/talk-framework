@@ -42,6 +42,16 @@ export function openInEditorPlugin() {
           res.end(`failed to launch ${editor}: ${err.message}`);
         }
       });
+
+      // Force all connected browsers to do a full reload. Useful after a
+      // batch of edits that left HMR in a broken state.
+      //   curl http://localhost:3000/__reload
+      server.middlewares.use('/__reload', (req, res) => {
+        server.ws.send({ type: 'full-reload', path: '*' });
+        res.statusCode = 200;
+        res.setHeader('content-type', 'application/json');
+        res.end(JSON.stringify({ ok: true, reloaded: true }));
+      });
     },
   };
 }

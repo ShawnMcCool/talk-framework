@@ -1,6 +1,6 @@
 import { createDeck, createPosition, next, prev, goToScene, sceneChanged, isRapidInput } from './engine.lib.js';
 
-export function createEngine({ stage, sceneDefs }) {
+export function createEngine({ stage, sceneDefs, onPositionChange = null }) {
   const deckDef = sceneDefs.map((s) => ({ title: s.title, slides: s.slides }));
   const deck = createDeck(deckDef);
   let position = createPosition();
@@ -56,9 +56,16 @@ export function createEngine({ stage, sceneDefs }) {
         animateToCurrentSlide();
       }
     }
+
+    if (onPositionChange) onPositionChange(position);
   }
 
   function handleKeyDown(e) {
+    // Don't steal keys from focused inputs (command palette, future forms, etc.)
+    const target = e.target;
+    const tag = (target && target.tagName) || '';
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || (target && target.isContentEditable)) return;
+
     if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
       e.preventDefault();
       inputTimestamps.push(Date.now());

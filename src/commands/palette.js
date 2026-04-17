@@ -80,6 +80,9 @@ export function createPalette({ devMode = true } = {}) {
         items[idx].action(query);
       });
     });
+
+    const selectedEl = resultsList.querySelector('.palette-item.selected');
+    if (selectedEl) selectedEl.scrollIntoView({ block: 'nearest' });
   }
 
   function open() {
@@ -95,6 +98,7 @@ export function createPalette({ devMode = true } = {}) {
   function close() {
     isOpen = false;
     if (overlay) overlay.classList.remove('open');
+    if (input) input.blur();
   }
 
   function handleKeyDown(e) {

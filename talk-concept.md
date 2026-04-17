@@ -1,17 +1,6 @@
 # Talk Concept
 
-Conventional wisdom will tell the budding software engineer that if they want to find a good job, they should invest in the most popular technologies. But is it true?
-
-What I know is true is that you have to start somewhere, but that starting place doesn't have to be where you end up.
-
-
-## Countering Conventional Wisdom
-
-A healthy counter-point to conventional wisdom.
-
-
-
-### Business Application Life Cycle
+## Build / Rot / Rewrite
 
 Let me tell you what it's like to professionally build business software.
 
@@ -64,7 +53,7 @@ The problem, over and over, every time. Is that when the system must change, dev
 1. identify how the system must change for the new feature and change the entire system so that it's fully aligned with its new way of being
 2. don't change how the system functions in a significant way, instead identify a quick route to deliver the feature and deliver it quickly
 
-<!--insert concrete examples--/>
+> insert concrete examples
 
 And here's the thing.. software engineers know that they shouldn't use shortcuts.. but they are kind of forced into it.. For one, they have a bunch of pressure from management.. after all.. the ceo's big strategic initiative is really important. But also.. the system has so many features that in order to modify the system into the form it SHOULD be in, the same kind of form it would be in if we performed a complete rewrite, we'd have to modify 15 features all at once. And that's basically impossible. Not only do we not have the budget, but it'd take a giga brain to figure out how to navigate all of that. So we don't. We implement the shortcut, deliver what was asked and move on. Maybe we even deliver it so fast that we're considered a hero.
 
@@ -78,10 +67,17 @@ In order to know what what goes wrong, you have to understand the 2 metrics that
 2. accidental complexity
 
 
+## Accidental Complexity
 
 
-design takes time
-design can block multiple teams
+
+### Essential Complexity
+
+Imagine you need to dig a hole to plant a tree. The hole has to be a certain size because the tree's roots need that much space — that's essential. You can't wish it away. Now, if your only tool is a spoon, you've got a lot of extra difficulty: blisters, hours of work, a sore back. That's accidental. Give someone a shovel and the hole still has to be the same size — the essential work didn't change — but the accidental difficulty mostly disappears.
+
+The right tool for the job. How can we say this with a straight face?
+
+The truth is that tools are selected for fit across multiple dimensions. If we have heavily invested in a lot of infrastructure around PHP and all of our programmers know PHP
 
 
 

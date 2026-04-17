@@ -1,12 +1,12 @@
 import * as THREE from 'three';
 import { createThreeRenderer } from '../../rendering/three-scene.js';
-import { playTimeline } from '../../animation/timeline.js';
+import { createTrackedTimeline } from '../../animation/tracked-timeline.js';
 import { colors } from '../../shared/colors.js';
 import { createTextSprite, glowMaterial } from '../scene-helpers.js';
 
 let renderer = null;
 let threeCtx = null;
-let currentAnimation = null;
+const tracker = createTrackedTimeline();
 let sleepLoopId = null;
 
 const MAILBOX_X = -1.8;
@@ -130,7 +130,7 @@ function stopSleepPulse() {
 
 function animateDequeueAndProcess(msgIndex, fromY, done) {
   const msg = messages[msgIndex];
-  return playTimeline(
+  return tracker.playTimeline(
     [
       { property: 'x', from: MAILBOX_X, to: EXEC_X, delay: 0, duration: 600 },
       { property: 'y', from: fromY, to: 0.5, delay: 0, duration: 600 },
@@ -140,13 +140,13 @@ function animateDequeueAndProcess(msgIndex, fromY, done) {
       msg.position.y = vals.y;
       renderer.markDirty();
     },
-    () => { currentAnimation = null; done(); },
+    done,
   );
 }
 
 function animateDissolve(msgIndex, done) {
   const msg = messages[msgIndex];
-  return playTimeline(
+  return tracker.playTimeline(
     [
       { property: 'y', from: 0.5, to: -1.2, delay: 0, duration: 600 },
       { property: 'opacity', from: 1, to: 0, delay: 200, duration: 400 },
@@ -160,7 +160,6 @@ function animateDissolve(msgIndex, done) {
     },
     () => {
       msg.visible = false;
-      currentAnimation = null;
       done();
     },
   );
@@ -182,9 +181,9 @@ const slideData = [
         done();
       } else if (stepIndex % 2 === 1 && msgIdx !== null) {
         const fromY = messages[msgIdx].position.y;
-        currentAnimation = animateDequeueAndProcess(msgIdx, fromY, done);
+        animateDequeueAndProcess(msgIdx, fromY, done);
       } else if (stepIndex % 2 === 0 && msgIdx !== null) {
-        currentAnimation = animateDissolve(msgIdx, done);
+        animateDissolve(msgIdx, done);
       } else if (stepIndex === 7) {
         resolveStep(7);
         done();
@@ -217,7 +216,7 @@ export const mailboxExecutionScene = {
 
   destroy() {
     stopSleepPulse();
-    if (currentAnimation) { currentAnimation.resolve(); currentAnimation = null; }
+    tracker.cancelAll();
     if (renderer) renderer.destroy();
     renderer = null;
     threeCtx = null;
@@ -225,12 +224,12 @@ export const mailboxExecutionScene = {
   },
 
   resolveToSlide(ctx, slideIndex, stepIndex) {
-    if (currentAnimation) { currentAnimation.resolve(); currentAnimation = null; }
+    tracker.cancelAll();
     slideData[slideIndex].resolve(stepIndex);
   },
 
   animateToSlide(ctx, slideIndex, stepIndex, done) {
-    if (currentAnimation) { currentAnimation.resolve(); currentAnimation = null; }
+    tracker.cancelAll();
     slideData[slideIndex].animate(stepIndex, done);
   },
 };

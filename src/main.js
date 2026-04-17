@@ -2,26 +2,43 @@ import { createEngine } from './engine/engine.js';
 import { createPalette } from './commands/palette.js';
 import { compileMarkdownScene } from './authoring/markdown-scene.js';
 import { validateScenes } from './authoring/scene-validation.js';
+
+// --- Act 1 — The Cycle of Shame ---
+import { cycleScene } from './scenes/02-cycle/scene.js';
+import perspectivesMd from './scenes/03-perspectives/scene.md?raw';
+import forkMd from './scenes/04-fork/scene.md?raw';
+import { bridgeScene } from './scenes/05-bridge/scene.js';
+
+// --- Act 2+ — Legacy / WIP ---
 import { hotTakesScene } from './scenes/07-hot-takes/scene.js';
 import { deepDiveScene } from './scenes/08-deep-dive/scene.js';
-import whyBeamMd from './scenes/09-why-beam/scene.md?raw';
-import { processesScene } from './scenes/10-processes/scene.js';
 import { faultToleranceScene } from './scenes/11-fault-tolerance/scene.js';
 import { codeExampleScene } from './scenes/12-code-example/scene.js';
-import { applyColorVars } from './shared/colors.js';
-import { createDebugOverlay } from './debug/overlay.js';
 
-const whyBeamScene = compileMarkdownScene(whyBeamMd);
+import { applyColorVars } from './shared/colors.js';
+import { sessionState } from './shared/session-state.js';
+import { createDebugOverlay } from './debug/overlay.js';
+import { createNavOverlay } from './debug/nav-overlay.js';
+
+const perspectivesScene = compileMarkdownScene(perspectivesMd);
+const forkScene = compileMarkdownScene(forkMd);
 
 // Each scene is paired with its source path so the dev HUD can surface it
 // and the "open in editor" shortcut knows what file to open.
+// Scenes are grouped by act — the `act` field is informational (no runtime
+// effect yet, but tooling can use it).
 const SCENE_SOURCES = [
-  { scene: whyBeamScene,         path: 'src/scenes/09-why-beam/scene.md' },
-  { scene: hotTakesScene,        path: 'src/scenes/07-hot-takes/scene.js' },
-  { scene: processesScene,       path: 'src/scenes/10-processes/scene.js' },
-  { scene: codeExampleScene,     path: 'src/scenes/12-code-example/scene.js' },
-  { scene: deepDiveScene,        path: 'src/scenes/08-deep-dive/scene.js' },
-  { scene: faultToleranceScene,  path: 'src/scenes/11-fault-tolerance/scene.js' },
+  // === Act 1 — The Cycle of Shame ===
+  { scene: cycleScene,           path: 'src/scenes/02-cycle/scene.js',           act: 1 },
+  { scene: perspectivesScene,    path: 'src/scenes/03-perspectives/scene.md',    act: 1 },
+  { scene: forkScene,            path: 'src/scenes/04-fork/scene.md',            act: 1 },
+  { scene: bridgeScene,          path: 'src/scenes/05-bridge/scene.js',          act: 1 },
+
+  // === Legacy / WIP (not yet assigned to an act) ===
+  { scene: hotTakesScene,        path: 'src/scenes/07-hot-takes/scene.js',       act: null },
+  { scene: codeExampleScene,     path: 'src/scenes/12-code-example/scene.js',    act: null },
+  { scene: deepDiveScene,        path: 'src/scenes/08-deep-dive/scene.js',       act: null },
+  { scene: faultToleranceScene,  path: 'src/scenes/11-fault-tolerance/scene.js', act: null },
 ];
 
 const stage = document.getElementById('stage');
@@ -30,6 +47,7 @@ applyColorVars(document.documentElement);
 let engine = null;
 let palette = null;
 let debug = null;
+let nav = null;
 let authoringKeyHandler = null;
 
 function buildSceneDefs() {
@@ -73,7 +91,15 @@ function setup() {
   const sceneDefs = buildSceneDefs();
   validateScenes(sceneDefs);
 
-  engine = createEngine({ stage, sceneDefs });
+  engine = createEngine({
+    stage,
+    sceneDefs,
+    onPositionChange: (p) => {
+      sessionState.setPosition(p);
+      if (debug) debug.refresh();
+      if (nav) nav.refresh();
+    },
+  });
   palette = createPalette({ devMode: true });
 
   palette.register({
@@ -125,26 +151,86 @@ function setup() {
     { resolveSource: sourcePathForScene },
   );
 
+  nav = createNavOverlay(
+    () => engine.getPosition(),
+    () => engine.getDeck(),
+    {
+      onJump: (sceneIdx, slideIdx, stepIdx) => {
+        engine.goToScene(sceneIdx);
+        engine.goToSlide?.(slideIdx, stepIdx);
+      },
+    },
+  );
+
+  function toggleDebug() {
+    debug.toggle();
+    sessionState.setFlag('debug-visible', debug.isVisible());
+  }
+
+  function toggleNav() {
+    nav.toggle();
+    sessionState.setFlag('nav-visible', nav.isVisible());
+  }
+
   palette.register({
     id: 'toggle-debug',
     title: 'Toggle Debug Overlay',
     dev: true,
-    action: () => debug.toggle(),
+    action: toggleDebug,
   });
 
-  // Dev-only keyboard: `o` opens the current scene's source file.
+  palette.register({
+    id: 'toggle-nav',
+    title: 'Toggle Navigation Overlay',
+    dev: true,
+    action: toggleNav,
+  });
+
+  // Dev-only keyboard:
+  //   `o` — open the current scene's source file
+  //   `n` — toggle the nav overlay
+  //   `d` — toggle the debug overlay
   // Ignored when the palette is open or an input is focused.
   authoringKeyHandler = (e) => {
-    if (e.key !== 'o' || e.metaKey || e.ctrlKey || e.altKey) return;
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
     if (palette.isOpen()) return;
     const tag = (e.target && e.target.tagName) || '';
     if (tag === 'INPUT' || tag === 'TEXTAREA') return;
-    e.preventDefault();
-    openCurrentSourceInEditor();
+
+    if (e.key === 'o') {
+      e.preventDefault();
+      openCurrentSourceInEditor();
+    } else if (e.key === 'n') {
+      e.preventDefault();
+      toggleNav();
+    } else if (e.key === 'd') {
+      e.preventDefault();
+      toggleDebug();
+    }
   };
   document.addEventListener('keydown', authoringKeyHandler);
 
+  // Restore overlay visibility.
+  if (sessionState.getFlag('debug-visible')) debug.toggle();
+  if (sessionState.getFlag('nav-visible')) nav.toggle();
+
   engine.start();
+
+  // Restore last position (if any). Clamp against current deck shape in case
+  // scenes were added/removed since the save.
+  const saved = sessionState.getPosition();
+  if (saved) {
+    const scene = sceneDefs[saved.sceneIndex];
+    if (scene) {
+      engine.goToScene(saved.sceneIndex);
+      engine.goToSlide?.(saved.slideIndex, saved.stepIndex);
+    }
+  }
+
+  // Force overlays to re-read the new deck/position snapshot after setup.
+  debug.refresh();
+  nav.refresh();
+
   palette.start();
 }
 
@@ -152,6 +238,7 @@ function teardown() {
   if (engine) engine.stop();
   if (palette) palette.stop();
   if (debug) debug.destroy();
+  if (nav) nav.destroy();
   if (authoringKeyHandler) document.removeEventListener('keydown', authoringKeyHandler);
   authoringKeyHandler = null;
 }
@@ -160,11 +247,9 @@ setup();
 
 if (import.meta.hot) {
   import.meta.hot.accept(() => {
-    const pos = engine ? engine.getPosition() : null;
+    // setup() itself restores position from localStorage and rebinds overlays
+    // to the new engine — no need to pass the old position through.
     teardown();
     setup();
-    if (pos) {
-      engine.goToScene(pos.sceneIndex);
-    }
   });
 }
