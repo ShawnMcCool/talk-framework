@@ -7,157 +7,157 @@ description: Use when creating, adding, or scaffolding a new presentation scene 
 
 Rigid skill for creating presentation scenes in beam-talk. Follow this checklist exactly.
 
-## 1. Decide Renderer Type
+## 1. Decide Scene Format
 
-| Type | When | Import |
-|------|------|--------|
-| **Three.js** | 3D visuals, animated diagrams, process simulations | `createThreeRenderer` from `../../rendering/three-scene.js` |
-| **HTML** | Text-heavy slides, bullet reveals, section headers | `createHtmlRenderer` from `../../rendering/html-scene.js` |
-| **SVG** | Flat diagrams where 3D adds no value | (not yet implemented) |
+| Format | When | File |
+|--------|------|------|
+| **Markdown** (default) | Content-heavy slides: headings, bullets, quotes, code, text | `scene.md` |
+| **Section slide** | Title-card transitions between sections | `scene.md` with `type: section` |
+| **Three.js** | 3D visuals, animated diagrams, process simulations | `scene.js` via `createThreeScene` |
+| **Custom HTML** | Rare — bespoke DOM layouts | `scene.js` via `createHtmlRenderer` |
+
+Default to markdown unless you genuinely need custom code.
 
 ## 2. Create Scene File
 
-Path: `src/scenes/{nn}-{name}/scene.js`
+Path: `src/scenes/{nn}-{name}/scene.md` (or `scene.js` for code scenes — pick one, not both)
 
 - `{nn}` = two-digit scene number matching planned order
 - `{name}` = kebab-case descriptive name
-- Example: `src/scenes/07-beam-vm/scene.js`
 
-## 3. Implement the Scene Contract
+## 3a. Markdown Scene (`scene.md`)
 
-Every scene MUST export this shape:
+```markdown
+---
+title: Why the BEAM?
+type: content
+---
+
+# Slide one heading
+
+- first bullet
+- second bullet
+- uses <strong style="color:{{beam}}">palette colors</strong> via {{token}} syntax
+
+---
+
+### The Philosophy
+
+:spacer:
+
+> Make it work, make it beautiful, make it fast.
+> — Joe Armstrong
+
+:spacer:
+
+!muted A quieter trailing paragraph.
+```
+
+Syntax:
+- `---` on its own line separates slides
+- Each top-level block = one reveal step
+- Blocks: `# / ## / ###` headings, `- / *` bullets, `> quote` (trailing `— attribution` captured), ```` ``` ```` code fences, `:spacer:` / `:spacer lg:`, `!muted text`, plain paragraphs
+- Raw HTML passes through
+- `{{colorName}}` is replaced with `colors[colorName]` from `src/shared/colors.js`
+
+For section slides:
+```markdown
+---
+title: Hot Takes
+type: section
+subtitle: Unpopular opinions
+accent: "#ff6b35"
+---
+```
+(No body needed.)
+
+## 3b. Three.js Scene (`scene.js` via `createThreeScene`)
+
+Use the factory — it absorbs renderer setup, animation cancellation, and lifecycle:
 
 ```javascript
+import { createThreeScene } from '../../three-scenes/scene-factory.js';
 import { colors } from '../../shared/colors.js';
-
-// For Three.js scenes:
 import * as THREE from 'three';
-import { createThreeRenderer } from '../../rendering/three-scene.js';
-import { playTimeline } from '../../animation/timeline.js';
 
-// For HTML scenes:
-// import { createHtmlRenderer } from '../../rendering/html-scene.js';
-
-let renderer = null;
-let threeCtx = null;      // or container for HTML
-let currentAnimation = null;
-
-const slideData = [
-  {
-    stepCount: 1,           // number of steps (clicks) in this slide
-    resolve(stepIndex) {
-      // Set ABSOLUTE state for this slide at this step
-      // No deltas — full state declaration
-      renderer.markDirty();  // Three.js only
-    },
-    animate(stepIndex, done) {
-      // Animate TO this slide's state, call done() when complete
-      // For simple slides: this.resolve(stepIndex); done();
-    },
-  },
-];
-
-export const myScene = {
+export const myScene = createThreeScene({
   title: 'Scene Title',
-  slides: slideData.map((s) => ({ stepCount: s.stepCount })),
+  slides: [{ stepCount: 3 }],
+  background: colors.bg,
 
-  init(stage) {
-    renderer = createThreeRenderer();
-    threeCtx = renderer.init(stage);
-    // Create Three.js objects here, add to threeCtx.scene
-    threeCtx.scene.background = new THREE.Color(colors.bg);
-    return {};
+  setup({ scene, camera }) {
+    // Create meshes; return them as a handle.
+    const box = new THREE.Mesh(/* ... */);
+    scene.add(box);
+    return { box };
   },
 
-  destroy() {
-    if (currentAnimation) {
-      currentAnimation.resolve();
-      currentAnimation = null;
+  // Optional per-frame update (drift, rotation, etc.)
+  onTick(objects, { markDirty }) {
+    objects.box.rotation.y += 0.005;
+  },
+
+  // ABSOLUTE state for a given slide/step.
+  resolveStep(objects, { slideIndex, stepIndex }) {
+    objects.box.material.opacity = stepIndex >= 1 ? 1 : 0;
+  },
+
+  // Animated transition. ALWAYS call done() when finished.
+  // playTimeline and setTimeout are auto-cancelled on next step.
+  animateStep(objects, { stepIndex, playTimeline, setTimeout, markDirty, done }) {
+    if (stepIndex === 1) {
+      playTimeline(
+        [{ property: 'op', from: 0, to: 1, delay: 0, duration: 400 }],
+        (v) => { objects.box.material.opacity = v.op; markDirty(); },
+        done,
+      );
+    } else {
+      done();
     }
-    if (renderer) renderer.destroy();
-    renderer = null;
-    threeCtx = null;
   },
-
-  resolveToSlide(ctx, slideIndex, stepIndex) {
-    if (currentAnimation) {
-      currentAnimation.resolve();
-      currentAnimation = null;
-    }
-    slideData[slideIndex].resolve(stepIndex);
-  },
-
-  animateToSlide(ctx, slideIndex, stepIndex, done) {
-    if (currentAnimation) {
-      currentAnimation.resolve();
-      currentAnimation = null;
-    }
-    slideData[slideIndex].animate(stepIndex, done);
-  },
-};
+});
 ```
+
+Reference: `src/scenes/07-beam-vm/scene.js`.
 
 ## 4. Determinism Checklist
 
-Before considering the scene complete, verify:
+- [ ] `resolveStep` sets ALL object properties to absolute values (positions, visibility, opacity)
+- [ ] `resolveStep` does NOT depend on previous slide state
+- [ ] Jumping directly to step N produces identical state to animating through 0..N
+- [ ] Steps within a slide are cumulative
 
-- [ ] Each `resolve()` sets ALL object properties to absolute values (positions, visibility, colors)
-- [ ] `resolve()` does NOT depend on previous slide state
-- [ ] Calling `resolveToSlide(n)` on a fresh scene produces identical state to animating through 0..n
-- [ ] Steps within a slide are cumulative: `resolve(stepIndex=1)` includes everything from `stepIndex=0`
-
-## 5. Animation Pattern
-
-For slides with animations, use the timeline system:
-
-```javascript
-animate(stepIndex, done) {
-  // First resolve to pre-animation state (previous slide's end state)
-  // Then animate to this slide's target state
-  currentAnimation = playTimeline(
-    [
-      { property: 'boxX', from: -2, to: 2, delay: 0, duration: 600 },
-      { property: 'boxOpacity', from: 0, to: 1, delay: 200, duration: 400 },
-    ],
-    (vals) => {
-      box.position.x = vals.boxX;
-      box.material.opacity = vals.boxOpacity;
-      renderer.markDirty();
-    },
-    () => {
-      currentAnimation = null;
-      done();
-    },
-  );
-},
-```
-
-Rules:
-- Always store animation in `currentAnimation` for cancellation
-- The `done` callback MUST be called when animation completes
-- `resolve()` for the same slide must produce the same end state as the animation
-
-## 6. Register the Scene
+## 5. Register the Scene
 
 In `src/main.js`:
 
-1. Import the scene: `import { myScene } from './scenes/nn-name/scene.js';`
-2. Add to `buildSceneDefs()` array in the correct position
+**Markdown:**
+```javascript
+import mySceneMd from './scenes/nn-name/scene.md?raw';
+// ...
+const mySceneModule = compileMarkdownScene(mySceneMd);
+```
+Add it to `SCENE_SOURCES` with its source path.
 
-## 7. Test with Pure Function Separation
+**JS:**
+```javascript
+import { myScene } from './scenes/nn-name/scene.js';
+```
+Add it to `SCENE_SOURCES` with its source path.
 
-If the scene has non-trivial logic (state machines, layout calculations, data transforms):
+## 6. Pure Function Separation (for non-trivial logic)
 
+If the scene has meaningful logic (state machines, layout calc):
 1. Extract to `src/scenes/{nn}-{name}/scene.lib.js`
 2. Write tests in `src/scenes/{nn}-{name}/scene.lib.test.js`
-3. Import the pure functions into `scene.js`
+3. Import into `scene.js`
 
-Simple scenes with only direct property assignments don't need separate lib files.
+## 7. Verify
 
-## 8. Verify
-
-1. Navigate to the scene via command palette (Escape → type scene title)
-2. Click through all slides and steps — animations play correctly
-3. Jump directly to the scene from another scene — resolveToSlide produces correct state
-4. Rapid-click through slides — state remains consistent (no visual glitches)
-5. Navigate away and back — scene reinitializes cleanly
+1. `./test` — all tests pass
+2. `./dev-check` — no Vite errors
+3. Navigate to the scene via command palette, click through all steps
+4. Jump directly via `Jump to Slide N.M` — state is correct
+5. Rapid-click through slides — animations cancel cleanly
+6. Navigate away and back — scene reinitializes cleanly
+7. Press `o` in dev mode — opens the scene source in `$EDITOR`

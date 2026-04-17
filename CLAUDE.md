@@ -23,6 +23,8 @@ Four layers in `src/`:
 | Rendering | `src/rendering/` | Three.js, HTML, SVG renderers (common lifecycle) |
 | Animation | `src/animation/` | Tween/timeline system for slide transitions |
 | Commands | `src/commands/` | Fuzzy-search command palette (Escape key) |
+| Authoring | `src/authoring/` | Markdown scene compiler, scene validation, editor middleware |
+| Three-scenes | `src/three-scenes/` | `createThreeScene` factory — boilerplate for custom 3D scenes |
 | Scenes | `src/scenes/` | Presentation content (one directory per scene) |
 
 Shared utilities: `src/shared/colors.js` (palette constants + CSS vars).
@@ -58,7 +60,67 @@ Register scenes in `src/main.js` `buildSceneDefs()`.
 
 ## Scene Naming
 
-Directories: `src/scenes/{nn}-{name}/scene.js` (e.g., `01-title`, `07-beam-vm`).
+Directories: `src/scenes/{nn}-{name}/` containing either `scene.md` (markdown-authored) or `scene.js` (custom code). Pick one, not both.
+
+## Authoring Scenes
+
+Most content is markdown. Use JS only when you need custom 3D or unusual behavior.
+
+### Markdown scenes (`scene.md`)
+
+```markdown
+---
+title: Why the BEAM?
+type: content        # or "section"
+accent: "#aaccff"    # optional, forwarded to factory
+---
+
+# Slide one heading
+
+- first bullet
+- second bullet
+
+---
+
+### The Philosophy
+
+> Make it work, make it beautiful, make it fast.
+> — Joe Armstrong
+```
+
+- `---` (on its own line) separates slides.
+- Each top-level block = one reveal step (heading, bullet list, paragraph, quote, code fence).
+- Supported block syntax: `#` / `##` / `###` headings, `-`/`*` bullets, `>` quotes (trailing `— attribution` line is captured), ```` ``` ```` fenced code, `:spacer:` or `:spacer lg:`, `!muted paragraph`.
+- Raw HTML passes through. `{{tokenName}}` is replaced with `colors[tokenName]` at compile time — use `{{beam}}`, `{{accent}}`, etc.
+- Register in `main.js` via `import mdSource from './scenes/.../scene.md?raw'` then `compileMarkdownScene(mdSource)`.
+
+### Three.js scenes (`scene.js` + `createThreeScene`)
+
+For custom 3D, use the factory to absorb renderer/lifecycle/cancellation boilerplate:
+
+```javascript
+import { createThreeScene } from '../../three-scenes/scene-factory.js';
+
+export const myScene = createThreeScene({
+  title: 'My 3D Scene',
+  slides: [{ stepCount: 3 }],
+  setup({ scene, camera }) { /* create objects, return handle */ },
+  onTick(objects, { markDirty }) { /* optional per-frame update */ },
+  resolveStep(objects, { slideIndex, stepIndex }) { /* absolute state */ },
+  animateStep(objects, { stepIndex, playTimeline, setTimeout, markDirty, done }) {
+    // Use injected playTimeline/setTimeout — cancellation is automatic.
+    // Always call done() when the step finishes.
+  },
+});
+```
+
+The factory handles renderer creation/destruction, scene background, animation cancellation, and the tick loop. See `src/scenes/07-beam-vm/scene.js` for a reference implementation.
+
+### Authoring aids (dev mode)
+
+- Press `Escape` for the command palette: `Jump to Slide...` accepts `scene.slide.step` (e.g. `9.2`).
+- Press `o` to open the current scene's source file in `$EDITOR`. Falls back to copying the path to the clipboard.
+- `Toggle Debug Overlay` shows scene / slide / step counters and the current source path.
 
 ## Planned Scenes
 

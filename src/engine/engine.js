@@ -88,6 +88,15 @@ export function createEngine({ stage, sceneDefs }) {
       navigate(goToScene(index, deck));
     },
 
+    goToSlide(slideIndex, stepIndex = 0) {
+      const scene = deck.scenes[position.sceneIndex];
+      if (!scene) return;
+      const clampedSlide = Math.max(0, Math.min(slideIndex, scene.slides.length - 1));
+      const slide = scene.slides[clampedSlide];
+      const clampedStep = Math.max(0, Math.min(stepIndex, slide.stepCount - 1));
+      navigate({ sceneIndex: position.sceneIndex, slideIndex: clampedSlide, stepIndex: clampedStep });
+    },
+
     getPosition() {
       return { ...position };
     },

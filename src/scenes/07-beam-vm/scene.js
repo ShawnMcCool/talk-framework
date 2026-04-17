@@ -1,64 +1,13 @@
 import * as THREE from 'three';
-import { createThreeRenderer } from '../../rendering/three-scene.js';
-import { playTimeline } from '../../animation/timeline.js';
+import { createThreeScene } from '../../three-scenes/scene-factory.js';
 import { colors } from '../../shared/colors.js';
 import { createTextSprite, glowMaterial } from '../scene-helpers.js';
-
-let renderer = null;
-let threeCtx = null;
-let currentAnimation = null;
-let loopId = null;
-
-let vmBox = null;
-let processSpheres = [];
-let shelves = [];
-let shelfLabels = [];
-let lightColumns = [];
 
 const SPHERE_COUNT = 12;
 const BOX_SIZE = { x: 7, y: 3.5, z: 2 };
 const BOX_CENTER = { x: 0, y: 1.2 };
 const SHELF_Y_START = -1.8;
 const SHELF_SPACING = 0.7;
-
-const sphereDrifts = [];
-
-function initSpherePositions() {
-  sphereDrifts.length = 0;
-  for (let i = 0; i < SPHERE_COUNT; i++) {
-    sphereDrifts.push({
-      vx: (Math.random() - 0.5) * 0.004,
-      vy: (Math.random() - 0.5) * 0.003,
-    });
-  }
-}
-
-function updateDrift() {
-  const halfX = BOX_SIZE.x / 2 - 0.3;
-  const halfY = BOX_SIZE.y / 2 - 0.3;
-  processSpheres.forEach((sphere, i) => {
-    if (!sphere.visible) return;
-    const d = sphereDrifts[i];
-    sphere.position.x += d.vx;
-    sphere.position.y += d.vy;
-    if (Math.abs(sphere.position.x - BOX_CENTER.x) > halfX) d.vx *= -1;
-    if (Math.abs(sphere.position.y - BOX_CENTER.y) > halfY) d.vy *= -1;
-  });
-}
-
-function startLoop() {
-  function tick() {
-    updateDrift();
-    renderer.markDirty();
-    loopId = requestAnimationFrame(tick);
-  }
-  loopId = requestAnimationFrame(tick);
-}
-
-function stopLoop() {
-  if (loopId) cancelAnimationFrame(loopId);
-  loopId = null;
-}
 
 const SHELF_DEFS = [
   { label: 'Scheduler', color: colors.accentWarm },
@@ -69,19 +18,20 @@ const SHELF_DEFS = [
 function createVmBox(scene) {
   const geo = new THREE.BoxGeometry(BOX_SIZE.x, BOX_SIZE.y, BOX_SIZE.z);
   const edges = new THREE.EdgesGeometry(geo);
-  vmBox = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({
+  const box = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({
     color: colors.accent,
     transparent: true,
     opacity: 0,
   }));
-  vmBox.position.set(BOX_CENTER.x, BOX_CENTER.y, 0);
-  scene.add(vmBox);
+  box.position.set(BOX_CENTER.x, BOX_CENTER.y, 0);
+  scene.add(box);
+  return box;
 }
 
 function createSpheres(scene) {
   const geo = new THREE.SphereGeometry(0.15, 16, 12);
-  processSpheres = [];
-  initSpherePositions();
+  const spheres = [];
+  const drifts = [];
   for (let i = 0; i < SPHERE_COUNT; i++) {
     const mat = glowMaterial(colors.accentWarm, { emissiveIntensity: 0.5 });
     const sphere = new THREE.Mesh(geo, mat);
@@ -92,13 +42,18 @@ function createSpheres(scene) {
     );
     sphere.visible = false;
     scene.add(sphere);
-    processSpheres.push(sphere);
+    spheres.push(sphere);
+    drifts.push({
+      vx: (Math.random() - 0.5) * 0.004,
+      vy: (Math.random() - 0.5) * 0.003,
+    });
   }
+  return { spheres, drifts };
 }
 
 function createShelves(scene) {
-  shelves = [];
-  shelfLabels = [];
+  const shelves = [];
+  const shelfLabels = [];
   SHELF_DEFS.forEach((def, i) => {
     const y = SHELF_Y_START - i * SHELF_SPACING;
     const geo = new THREE.BoxGeometry(6.5, 0.15, 0.5);
@@ -118,10 +73,11 @@ function createShelves(scene) {
     scene.add(label);
     shelfLabels.push(label);
   });
+  return { shelves, shelfLabels };
 }
 
 function createLightColumns(scene) {
-  lightColumns = [];
+  const lightColumns = [];
   const xPositions = [-2.5, -1.2, 0, 1.2, 2.5, 3.5];
   const geo = new THREE.CylinderGeometry(0.02, 0.02, 5, 4);
   xPositions.forEach((x) => {
@@ -135,112 +91,103 @@ function createLightColumns(scene) {
     scene.add(col);
     lightColumns.push(col);
   });
+  return lightColumns;
 }
 
-function resolveStep(step) {
+function driftSpheres(objects) {
+  const halfX = BOX_SIZE.x / 2 - 0.3;
+  const halfY = BOX_SIZE.y / 2 - 0.3;
+  objects.spheres.forEach((sphere, i) => {
+    if (!sphere.visible) return;
+    const d = objects.drifts[i];
+    sphere.position.x += d.vx;
+    sphere.position.y += d.vy;
+    if (Math.abs(sphere.position.x - BOX_CENTER.x) > halfX) d.vx *= -1;
+    if (Math.abs(sphere.position.y - BOX_CENTER.y) > halfY) d.vy *= -1;
+  });
+}
+
+function applyStep({ vmBox, spheres, shelves, shelfLabels, lightColumns }, step) {
   vmBox.material.opacity = step >= 0 ? 0.35 : 0;
-  processSpheres.forEach((s) => { s.visible = step >= 1; });
+  spheres.forEach((s) => { s.visible = step >= 1; });
   shelves.forEach((s) => { s.material.opacity = step >= 2 ? 0.6 : 0; });
   shelfLabels.forEach((l) => { l.material.opacity = step >= 2 ? 0.9 : 0; });
   lightColumns.forEach((c) => { c.material.opacity = step >= 3 ? 0.15 : 0; });
-  renderer.markDirty();
 }
 
-const slideData = [
-  {
-    stepCount: 4,
-    resolve(stepIndex) {
-      resolveStep(stepIndex);
-    },
-    animate(stepIndex, done) {
-      if (stepIndex === 0) {
-        currentAnimation = playTimeline(
-          [{ property: 'opacity', from: 0, to: 0.35, delay: 0, duration: 600 }],
-          (vals) => { vmBox.material.opacity = vals.opacity; renderer.markDirty(); },
-          () => { currentAnimation = null; done(); },
-        );
-      } else if (stepIndex === 1) {
-        let shown = 0;
-        function showNext() {
-          if (shown < SPHERE_COUNT) {
-            processSpheres[shown].visible = true;
-            shown++;
-            renderer.markDirty();
-            setTimeout(showNext, 60);
-          } else {
-            done();
-          }
-        }
-        showNext();
-      } else if (stepIndex === 2) {
-        currentAnimation = playTimeline(
-          [
-            ...shelves.flatMap((s, i) => [
-              { property: `shelf${i}`, from: 0, to: 0.6, delay: i * 200, duration: 400 },
-            ]),
-            ...shelfLabels.flatMap((l, i) => [
-              { property: `label${i}`, from: 0, to: 0.9, delay: i * 200, duration: 400 },
-            ]),
-          ],
-          (vals) => {
-            shelves.forEach((s, i) => { s.material.opacity = vals[`shelf${i}`]; });
-            shelfLabels.forEach((l, i) => { l.material.opacity = vals[`label${i}`]; });
-            renderer.markDirty();
-          },
-          () => { currentAnimation = null; done(); },
-        );
-      } else if (stepIndex === 3) {
-        currentAnimation = playTimeline(
-          lightColumns.map((c, i) => ({
-            property: `col${i}`, from: 0, to: 0.15, delay: i * 80, duration: 400,
-          })),
-          (vals) => {
-            lightColumns.forEach((c, i) => { c.material.opacity = vals[`col${i}`]; });
-            renderer.markDirty();
-          },
-          () => { currentAnimation = null; done(); },
-        );
-      }
-    },
-  },
-];
-
-export const beamVmScene = {
+export const beamVmScene = createThreeScene({
   title: 'The BEAM VM',
-  slides: slideData.map((s) => ({ stepCount: s.stepCount })),
+  slides: [{ stepCount: 4 }],
+  background: colors.bg,
 
-  init(stage) {
-    renderer = createThreeRenderer();
-    threeCtx = renderer.init(stage);
-    threeCtx.scene.background = new THREE.Color(colors.bg);
-    createVmBox(threeCtx.scene);
-    createSpheres(threeCtx.scene);
-    createShelves(threeCtx.scene);
-    createLightColumns(threeCtx.scene);
-    startLoop();
-    return {};
+  setup({ scene }) {
+    const vmBox = createVmBox(scene);
+    const { spheres, drifts } = createSpheres(scene);
+    const { shelves, shelfLabels } = createShelves(scene);
+    const lightColumns = createLightColumns(scene);
+    return { vmBox, spheres, drifts, shelves, shelfLabels, lightColumns };
   },
 
-  destroy() {
-    stopLoop();
-    if (currentAnimation) { currentAnimation.resolve(); currentAnimation = null; }
-    if (renderer) renderer.destroy();
-    renderer = null;
-    threeCtx = null;
-    vmBox = null;
-    processSpheres = [];
-    shelves = [];
-    shelfLabels = [];
-    lightColumns = [];
+  onTick(objects) {
+    driftSpheres(objects);
   },
 
-  resolveToSlide(ctx, slideIndex, stepIndex) {
-    if (currentAnimation) { currentAnimation.resolve(); currentAnimation = null; }
-    slideData[slideIndex].resolve(stepIndex);
+  resolveStep(objects, { stepIndex }) {
+    applyStep(objects, stepIndex);
   },
 
-  animateToSlide(ctx, slideIndex, stepIndex, done) {
-    if (currentAnimation) { currentAnimation.resolve(); currentAnimation = null; }
-    slideData[slideIndex].animate(stepIndex, done);
+  animateStep(objects, { stepIndex, playTimeline, setTimeout: later, markDirty, done }) {
+    const { vmBox, spheres, shelves, shelfLabels, lightColumns } = objects;
+
+    if (stepIndex === 0) {
+      playTimeline(
+        [{ property: 'opacity', from: 0, to: 0.35, delay: 0, duration: 600 }],
+        (vals) => { vmBox.material.opacity = vals.opacity; markDirty(); },
+        done,
+      );
+    } else if (stepIndex === 1) {
+      let shown = 0;
+      function showNext() {
+        if (shown < SPHERE_COUNT) {
+          spheres[shown].visible = true;
+          shown++;
+          markDirty();
+          later(showNext, 60);
+        } else {
+          done();
+        }
+      }
+      showNext();
+    } else if (stepIndex === 2) {
+      playTimeline(
+        [
+          ...shelves.map((_, i) => ({
+            property: `shelf${i}`, from: 0, to: 0.6, delay: i * 200, duration: 400,
+          })),
+          ...shelfLabels.map((_, i) => ({
+            property: `label${i}`, from: 0, to: 0.9, delay: i * 200, duration: 400,
+          })),
+        ],
+        (vals) => {
+          shelves.forEach((s, i) => { s.material.opacity = vals[`shelf${i}`]; });
+          shelfLabels.forEach((l, i) => { l.material.opacity = vals[`label${i}`]; });
+          markDirty();
+        },
+        done,
+      );
+    } else if (stepIndex === 3) {
+      playTimeline(
+        lightColumns.map((_, i) => ({
+          property: `col${i}`, from: 0, to: 0.15, delay: i * 80, duration: 400,
+        })),
+        (vals) => {
+          lightColumns.forEach((c, i) => { c.material.opacity = vals[`col${i}`]; });
+          markDirty();
+        },
+        done,
+      );
+    } else {
+      done();
+    }
   },
-};
+});
