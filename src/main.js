@@ -14,6 +14,11 @@ import { sessionState } from './shared/session-state.js';
 import { createDebugOverlay } from './debug/overlay.js';
 import { createNavOverlay } from './debug/nav-overlay.js';
 
+// Used to scope saved navigation state (scene/slide/step) to the current deck,
+// so loading a different talk folder starts fresh at scene 1 / slide 1
+// instead of restoring the previous deck's last position.
+const deckId = config?.title ?? null;
+
 const lastGood = createLastGoodCache();
 const banner = (import.meta.env?.DEV) ? mountErrorBanner(document.body) : null;
 if (banner && import.meta.hot) {
@@ -135,7 +140,7 @@ function setup() {
     stage,
     sceneDefs,
     onPositionChange: (p) => {
-      sessionState.setPosition(p);
+      sessionState.setPosition(deckId, p);
       if (debug) debug.refresh();
       if (nav) nav.refresh();
     },
@@ -256,9 +261,10 @@ function setup() {
 
   engine.start();
 
-  // Restore last position (if any). Clamp against current deck shape in case
-  // scenes were added/removed since the save.
-  const saved = sessionState.getPosition();
+  // Restore last position (if any). Scoped to the current deck by `deckId`
+  // so loading a different talk folder starts fresh. Clamped against the
+  // current deck shape in case scenes were added/removed since the save.
+  const saved = sessionState.getPosition(deckId);
   if (saved) {
     const scene = sceneDefs[saved.sceneIndex];
     if (scene) {
