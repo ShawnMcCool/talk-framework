@@ -249,9 +249,17 @@ jj new
 
 ## Phase 2 — Relocate existing components into `src/components/`
 
-Each relocation is a self-contained change: move the directory, rename it to its new (singular) form, update every import across the codebase, run tests. No behavior changes.
+Each relocation is a self-contained change: move the directory, rename it to its new (singular) form, update every import across the codebase **including the moved file's own relative imports** (the relocation changes depth from `src/<name>/` to `src/components/<name>/` — one deeper — so every `../foo` in the moved file must become `../../foo`), run tests, run a runtime-resolve smoke check, then commit. No behavior changes.
 
-> **Search-and-replace discipline:** after moving a directory, update imports by running a grep across `src/`, `bin/`, `templates/`, and `test/` for the old path, then fixing each occurrence. Use the Grep tool (not ad-hoc text tools).
+> **Search-and-replace discipline:** after moving a directory, update imports by running a grep across `src/`, `bin/`, `templates/`, and `test/` for the old path, then fixing each occurrence. Use the Grep tool (not ad-hoc text tools). **Additionally, open each moved file and audit its own `import` statements** — any relative path must gain one extra `../` because depth increased.
+>
+> **Runtime-resolve smoke check:** `talk test` does NOT exercise markdown-scene runtime paths, so broken relative imports in moved factory files pass the test suite silently. After each relocation, run:
+>
+> ```bash
+> docker run --rm -v "$PWD:/app" -w /app node:20 node --input-type=module -e "import('./<new-path>/scene-factory.js').then(() => console.log('OK')).catch(e => { console.error(e.message); process.exit(1); })"
+> ```
+>
+> For each moved `.js` file that has imports. Expected: `OK`. Any `Cannot find module` means an import was missed.
 
 ### Task 2: Relocate content-slides → content-slide
 
