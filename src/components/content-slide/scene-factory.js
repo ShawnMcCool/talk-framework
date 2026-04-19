@@ -1,5 +1,6 @@
 import { createHtmlRenderer } from '../../rendering/html-scene.js';
 import { colors as defaultColors } from '../../shared/colors.js';
+import { registry } from '../../authoring/component-registry.js';
 
 let instanceCounter = 0;
 
@@ -107,51 +108,57 @@ export function createContentSlide(title, slides, opts = {}) {
   }
 
   function renderBlock(block) {
-    const accentStyle = block.accent ? `color: ${block.accent};` : '';
-
-    switch (block.type) {
-      case 'heading': {
-        const level = block.level || 1;
-        return `<div class="${id}-heading" data-level="${level}" ${accentStyle ? `style="${accentStyle}"` : ''}>${block.text}</div>`;
-      }
-      case 'text':
-        return `<p class="${id}-text ${block.muted ? 'muted' : ''}">${block.text}</p>`;
-      case 'bullets': {
-        const bulletStyle = block.accent
-          ? `style="--bullet-color: ${block.accent};"` : '';
-        const items = block.items.map(item =>
-          `<li${block.accent ? ` style="::before { background: ${block.accent}; }"` : ''}>${item}</li>`
-        ).join('');
-        return `<ul class="${id}-bullets" ${bulletStyle}>${items}</ul>`;
-      }
-      case 'code':
-        return `<div class="${id}-code"><pre>${block.code}</pre></div>`;
-      case 'quote': {
-        const cite = block.attribution ? `<cite>— ${block.attribution}</cite>` : '';
-        return `<div class="${id}-quote"><p>${block.text}</p>${cite}</div>`;
-      }
-      case 'columns': {
-        const left = (block.left || []).map(renderBlock).join('');
-        const right = (block.right || []).map(renderBlock).join('');
-        return `<div class="${id}-columns"><div>${left}</div><div>${right}</div></div>`;
-      }
-      case 'spacer':
-        return `<div class="${id}-spacer" data-size="${block.size || 'md'}"></div>`;
-      default:
-        return '';
+    // 1. Columns are a content-slide-native compositional primitive (not a
+    //    registered component). Handle inline.
+    if (block.type === 'columns') {
+      const wrap = document.createElement('div');
+      wrap.className = `${id}-columns`;
+      const left = document.createElement('div');
+      const right = document.createElement('div');
+      for (const b of (block.left || [])) left.appendChild(renderBlock(b));
+      for (const b of (block.right || [])) right.appendChild(renderBlock(b));
+      wrap.appendChild(left);
+      wrap.appendChild(right);
+      return wrap;
     }
+
+    // 2. Fenced code with a recognized info-string → custom markdown-block.
+    if (block.type === 'code' && block.language) {
+      const custom = registry.getByInfoString(block.language);
+      if (custom && custom.render) {
+        const parsed = custom.parse ? custom.parse(block.code, { file: null, blockStartLine: 0 }) : block.code;
+        return custom.render(parsed, { classPrefix: id, colors: c });
+      }
+    }
+
+    // 3. Built-in block type → registered markdown-block.
+    const builtin = registry.getByBlockType(block.type);
+    if (builtin && builtin.render) {
+      const parsed = builtin.parse ? builtin.parse(block) : block;
+      return builtin.render(parsed, { classPrefix: id, colors: c });
+    }
+
+    // 4. Unknown: empty div (keeps the deck renderable; linter will flag).
+    return document.createElement('div');
   }
 
   function renderSlide(slideBlocks, stepIndex, animated) {
-    const cls = animated ? `${id}-block` : `${id}-block instant`;
-    const html = slideBlocks.map((block, i) => {
-      const visible = i <= stepIndex;
-      const classes = visible ? `${cls} visible` : `${id}-block`;
-      const delay = animated && visible ? `transition-delay: ${i * 80}ms;` : '';
-      return `<div class="${classes}" style="${delay}">${renderBlock(block)}</div>`;
-    }).join('');
+    const wrap = document.createElement('div');
+    wrap.className = `${id}-wrap`;
 
-    contentEl.innerHTML = `<div class="${id}-wrap">${html}</div>`;
+    slideBlocks.forEach((block, i) => {
+      const slot = document.createElement('div');
+      const visible = i <= stepIndex;
+      slot.className = animated
+        ? `${id}-block${visible ? ' visible' : ''}`
+        : `${id}-block${visible ? ' instant' : ''}`;
+      if (animated && visible) slot.style.transitionDelay = `${i * 80}ms`;
+      slot.appendChild(renderBlock(block));
+      wrap.appendChild(slot);
+    });
+
+    contentEl.innerHTML = '';
+    contentEl.appendChild(wrap);
   }
 
   return {
