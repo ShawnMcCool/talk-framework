@@ -12,7 +12,11 @@ Symlink the `talk` dispatcher onto your PATH:
 ln -s "$PWD/talk" ~/.local/bin/talk
 ```
 
-The dev server and tests run inside Docker, so Docker Compose is required. No host Node is needed for day-to-day use.
+The dev server and tests run inside Docker, so Docker Compose is required. No host Node is needed for day-to-day use. When you bump a dependency in `package.json`, refresh the container's `node_modules` volume with:
+
+```bash
+docker compose run --rm app npm install
+```
 
 ## Quick start
 

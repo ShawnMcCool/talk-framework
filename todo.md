@@ -103,7 +103,7 @@ Items surfaced by reviews during B that don't block any sub-project. Tackle as m
 ## 7. Constraints and quirks (short form — see CLAUDE.md for details)
 
 - **Use `jj`, never `git`.** Colocated git+jj repo.
-- **Docker-only runtime.** `talk test` runs the suite inside Docker. No host Node needed for day-to-day (a host Node is used by `talk new` and `talk version` as trivial exceptions).
+- **Docker-only runtime.** `talk test` runs the suite inside Docker. No host Node needed for day-to-day (a host Node is used by `talk new` and `talk version` as trivial exceptions). `talk serve` reuses the cached image — after adding or bumping a dep in `package.json`, run `docker compose run --rm app npm install` to update the `node_modules` volume.
 - **Vite uses polling in Docker** (inotify isn't reliable through bind mounts).
 - **TDD + pure-function separation.** Logic in `*.lib.js`, tests in `*.lib.test.js`.
 - **No `.sh` suffixes** on scripts.

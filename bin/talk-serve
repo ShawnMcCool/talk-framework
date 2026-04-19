@@ -30,4 +30,8 @@ echo "            http://localhost:3000"
 
 export CONTENT_DIR="$ROOT"
 cd "$FRAMEWORK_ROOT"
-exec docker compose up --build
+# `up` without --build: first run builds; subsequent runs reuse the cached
+# image. The framework source is bind-mounted at /app, so live edits don't
+# need a rebuild. Run `docker compose run --rm app npm install` when you
+# add or bump a dependency in package.json.
+exec docker compose up
