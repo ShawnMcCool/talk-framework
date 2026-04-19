@@ -224,7 +224,7 @@
  */
 
 // =============================================================================
-// Section slides — src/section-slides/scene-factory.js
+// Section slides — src/components/section-slide/scene-factory.js
 // =============================================================================
 
 /**

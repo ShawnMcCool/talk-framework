@@ -1,6 +1,6 @@
 import { parseMarkdownScene } from './markdown-scene.lib.js';
 import { createContentSlide } from '../components/content-slide/index.js';
-import { createSectionSlide } from '../section-slides/scene-factory.js';
+import { createSectionSlide } from '../components/section-slide/scene-factory.js';
 import { colors } from '../shared/colors.js';
 
 /**

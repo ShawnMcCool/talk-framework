@@ -1,5 +1,5 @@
-import { createHtmlRenderer } from '../rendering/html-scene.js';
-import { colors } from '../shared/colors.js';
+import { createHtmlRenderer } from '../../rendering/html-scene.js';
+import { colors } from '../../shared/colors.js';
 
 let instanceCounter = 0;
 
