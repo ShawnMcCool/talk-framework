@@ -136,22 +136,37 @@ Markdown scenes satisfy this contract via `compileMarkdownScene`; JS scenes typi
 
 ## Components catalogue
 
-The framework exposes these components. Authors should reach for the highest-level component that fits.
+`src/authoring/component-registry.js` is the single source of truth. Every component — scene-type, markdown-block, or js-factory — registers a descriptor in its own `src/components/<name>/component.js` at module load time. Authors don't consult the registry directly; the linter and content-slide dispatcher query it at runtime to parse and validate content.
+
+| Name | Folder | Kind |
+|------|--------|------|
+| content-slide | `src/components/content-slide/` | scene-type |
+| section-slide | `src/components/section-slide/` | scene-type |
+| heading | `src/components/heading/` | markdown-block |
+| paragraph | `src/components/paragraph/` | markdown-block |
+| bullet-list | `src/components/bullet-list/` | markdown-block |
+| quote | `src/components/quote/` | markdown-block |
+| code-fence | `src/components/code-fence/` | markdown-block |
+| spacer | `src/components/spacer/` | markdown-block |
+| box-diagram | `src/components/box-diagram/` | markdown-block |
+| three-scene | `src/components/three-scene/` | js-factory |
+| svg-scene | `src/components/svg-scene/` | js-factory |
+| title-animation | `src/components/title-animation/` | js-factory |
 
 ### Markdown-authored
 
 Author these by dropping a `scene.md` in the content folder. See `docs/markdown-authoring.md` for the full block and frontmatter reference.
 
-- **Content slide** (`src/components/content-slide/`) — headings, bullets, quotes, code fences, paragraphs, muted text, spacers. The default `type` in frontmatter.
-- **Section slide** (`src/components/section-slide/`) — large titled section break. `type: section` in frontmatter.
+The two scene types are selected via `type:` in frontmatter: **content-slide** (the default) accepts body blocks; **section-slide** renders a large titled section break (`type: section`).
+
+Body blocks — heading, paragraph, bullet-list, quote, code-fence, spacer, and box-diagram — are authored inline in the scene body using standard markdown syntax or fenced-code DSL.
 
 Minimal example:
 
-```markdown
+````markdown
 ---
 title: Why it matters
 type: content
-accent: "#aaccff"
 ---
 
 # Heading
@@ -159,13 +174,13 @@ accent: "#aaccff"
 - first bullet
 - second bullet
 
----
-
-### Another slide
-
-> Make it work, make it beautiful, make it fast.
-> — Joe Armstrong
+```box-diagram
+section: THE SYSTEM
+box client
+box api role=accent
+client -- POST --> api
 ```
+````
 
 `---` on its own line separates slides. `{{tokenName}}` is replaced with `colors[tokenName]` at compile time.
 
@@ -234,9 +249,15 @@ Sub-project A (content-folder foundation) is complete:
 - The Vite content-loader plugin exposes the mounted content folder via `virtual:content-manifest`.
 - Bad scenes render as error-placeholder cards; the rest of the deck stays navigable.
 
+Sub-project B (component-aware linter + dev error overlay) is complete:
+
+- Component registry at `src/authoring/component-registry.js`; every rendered element registers a descriptor in `src/components/<name>/component.js`.
+- `talk lint` is content-aware: parses each scene via the registry and validates every block.
+- Dev mode surfaces errors as an edge banner on the last-good render; the full-screen placeholder is only the first-render fallback.
+- `box-diagram` is the canonical non-built-in component — fenced-code DSL with parser, validator, and renderer.
+
 Still open (see `todo.md`):
 
-- **Sub-project B** — component-aware linter and in-browser error overlay.
 - **Sub-project C** — markdown bridges for Three.js / SVG / title-animation components.
 - **Sub-project D** — framework-version drift warning.
 
