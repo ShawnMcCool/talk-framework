@@ -3,8 +3,11 @@ services:
     build: .
     ports:
       - "3000:3000"
+    environment:
+      CONTENT_DIR: /content
     volumes:
       - .:/app
+      - ${CONTENT_DIR:-./templates/new-talk}:/content:ro
       - node_modules:/app/node_modules
     command: npm run dev
 
