@@ -124,6 +124,7 @@ function parseSlideBlocks(lines) {
 
     // Fenced code
     if (/^```/.test(trimmed)) {
+      const openLine = i + 1; // 1-indexed position of the opening fence
       const lang = trimmed.slice(3).trim();
       const codeLines = [];
       i++;
@@ -132,31 +133,33 @@ function parseSlideBlocks(lines) {
         i++;
       }
       i++; // consume closing fence
-      blocks.push({ type: 'code', code: codeLines.join('\n'), language: lang || '' });
+      blocks.push({ type: 'code', code: codeLines.join('\n'), language: lang || '', line: openLine + 1 });
       continue;
     }
 
     // Heading
     const h = trimmed.match(/^(#{1,3})\s+(.+)$/);
     if (h) {
-      blocks.push({ type: 'heading', text: h[2], level: h[1].length });
+      blocks.push({ type: 'heading', text: h[2], level: h[1].length, line: i + 1 });
       i++;
       continue;
     }
 
     // Bullets
     if (/^[-*]\s+/.test(trimmed)) {
+      const startLine = i + 1;
       const items = [];
       while (i < lines.length && /^\s*[-*]\s+/.test(lines[i])) {
         items.push(lines[i].replace(/^\s*[-*]\s+/, ''));
         i++;
       }
-      blocks.push({ type: 'bullets', items });
+      blocks.push({ type: 'bullets', items, line: startLine });
       continue;
     }
 
     // Blockquote
     if (/^>\s?/.test(trimmed)) {
+      const startLine = i + 1;
       const qLines = [];
       while (i < lines.length && /^>\s?/.test(lines[i].trim())) {
         qLines.push(lines[i].trim().replace(/^>\s?/, ''));
@@ -169,7 +172,7 @@ function parseSlideBlocks(lines) {
         attribution = last.replace(/^(—|--)\s*/, '').trim();
         qLines.pop();
       }
-      const block = { type: 'quote', text: qLines.join(' ').trim() };
+      const block = { type: 'quote', text: qLines.join(' ').trim(), line: startLine };
       if (attribution) block.attribution = attribution;
       blocks.push(block);
       continue;
@@ -178,7 +181,7 @@ function parseSlideBlocks(lines) {
     // Directive-style blocks like :spacer: or :spacer lg:
     const dir = trimmed.match(/^:([a-z]+)(?:\s+([a-z0-9]+))?:$/i);
     if (dir) {
-      const block = { type: dir[1] };
+      const block = { type: dir[1], line: i + 1 };
       if (dir[2]) block.size = dir[2];
       blocks.push(block);
       i++;
@@ -186,6 +189,7 @@ function parseSlideBlocks(lines) {
     }
 
     // Paragraph (collect until blank/block boundary)
+    const startLine = i + 1;
     const pLines = [];
     while (i < lines.length) {
       const l = lines[i];
@@ -202,7 +206,7 @@ function parseSlideBlocks(lines) {
     let text = pLines.join(' ').trim();
     const muted = text.startsWith('!muted');
     if (muted) text = text.replace(/^!muted\s*/, '');
-    const block = { type: 'text', text };
+    const block = { type: 'text', text, line: startLine };
     if (muted) block.muted = true;
     blocks.push(block);
   }

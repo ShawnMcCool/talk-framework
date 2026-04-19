@@ -86,7 +86,7 @@ describe('parseSlideBody', () => {
 
   it('parses a heading block', () => {
     const slides = parseSlideBody('# Big Title');
-    assert.deepEqual(slides[0][0], { type: 'heading', text: 'Big Title', level: 1 });
+    assert.deepEqual(slides[0][0], { type: 'heading', text: 'Big Title', level: 1, line: 1 });
   });
 
   it('parses h2 and h3 with correct levels', () => {
@@ -101,17 +101,18 @@ describe('parseSlideBody', () => {
     assert.deepEqual(slides[0][0], {
       type: 'bullets',
       items: ['alpha', 'beta', 'gamma'],
+      line: 1,
     });
   });
 
   it('supports * as bullet marker', () => {
     const slides = parseSlideBody('* one\n* two');
-    assert.deepEqual(slides[0][0], { type: 'bullets', items: ['one', 'two'] });
+    assert.deepEqual(slides[0][0], { type: 'bullets', items: ['one', 'two'], line: 1 });
   });
 
   it('parses a blockquote', () => {
     const slides = parseSlideBody('> Make it work.');
-    assert.deepEqual(slides[0][0], { type: 'quote', text: 'Make it work.' });
+    assert.deepEqual(slides[0][0], { type: 'quote', text: 'Make it work.', line: 1 });
   });
 
   it('attaches attribution from trailing — line inside quote', () => {
@@ -119,6 +120,7 @@ describe('parseSlideBody', () => {
     assert.deepEqual(slides[0][0], {
       type: 'quote',
       text: 'A wise quote.',
+      line: 1,
       attribution: 'Someone Famous',
     });
   });
@@ -129,6 +131,7 @@ describe('parseSlideBody', () => {
       type: 'code',
       code: 'const x = 1;',
       language: 'js',
+      line: 2,
     });
   });
 
@@ -137,6 +140,7 @@ describe('parseSlideBody', () => {
     assert.deepEqual(slides[0][0], {
       type: 'text',
       text: 'Some prose. With two lines.',
+      line: 1,
     });
   });
 
@@ -145,18 +149,19 @@ describe('parseSlideBody', () => {
     assert.deepEqual(slides[0][0], {
       type: 'text',
       text: 'Quiet voice.',
+      line: 1,
       muted: true,
     });
   });
 
   it('recognises :spacer: as a spacer block', () => {
     const slides = parseSlideBody(':spacer:');
-    assert.deepEqual(slides[0][0], { type: 'spacer' });
+    assert.deepEqual(slides[0][0], { type: 'spacer', line: 1 });
   });
 
   it('recognises :spacer lg: as a large spacer', () => {
     const slides = parseSlideBody(':spacer lg:');
-    assert.deepEqual(slides[0][0], { type: 'spacer', size: 'lg' });
+    assert.deepEqual(slides[0][0], { type: 'spacer', size: 'lg', line: 1 });
   });
 
   it('separates blocks across blank lines', () => {
@@ -263,5 +268,29 @@ accent: "#abc"
     assert.equal(parsed.options.title, undefined);
     assert.equal(parsed.options.type, undefined);
     assert.equal(parsed.options.accent, '#abc');
+  });
+});
+
+describe('parseSlideBlocks line numbers', () => {
+  it('attaches line numbers to each block', () => {
+    const src = `---
+title: T
+---
+
+# Heading
+
+- a
+- b
+
+\`\`\`js
+code
+\`\`\`
+`;
+    const { slides } = parseMarkdownScene(src, {});
+    for (const slide of slides) {
+      for (const block of slide) {
+        assert.ok(typeof block.line === 'number' && block.line >= 1, `expected block.line on ${block.type}`);
+      }
+    }
   });
 });

@@ -23,7 +23,7 @@ test('lint fails on a folder with structural issues', () => {
     fs.cpSync(path.join(tmp, '02-intro'), path.join(tmp, '02-duplicate'), { recursive: true });
     const r = runLint(tmp);
     assert.notEqual(r.status, 0);
-    assert.match(r.stderr, /duplicate/i);
+    assert.match(r.stdout, /duplicate/i);
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });
   }
