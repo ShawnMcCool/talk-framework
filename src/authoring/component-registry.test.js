@@ -105,3 +105,9 @@ test('bootstrap: heading is registered', () => {
   assert.equal(c.kind, 'markdown-block');
   assert.equal(registry.getByBlockType('heading'), c);
 });
+
+test('bootstrap: paragraph is registered', () => {
+  const c = registry.getByName('paragraph');
+  assert.ok(c);
+  assert.equal(registry.getByBlockType('text'), c);
+});
