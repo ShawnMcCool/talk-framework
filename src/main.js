@@ -19,6 +19,10 @@ import { createNavOverlay } from './debug/nav-overlay.js';
 // instead of restoring the previous deck's last position.
 const deckId = config?.title ?? null;
 
+// Reflect the deck's title in the browser tab so multiple decks open in
+// different tabs stay distinguishable.
+if (config?.title) document.title = config.title;
+
 const lastGood = createLastGoodCache();
 const banner = (import.meta.env?.DEV) ? mountErrorBanner(document.body) : null;
 if (banner && import.meta.hot) {
