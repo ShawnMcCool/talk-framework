@@ -1,315 +1,148 @@
-# todo — framework/content paradigm
+# todo — next steps for the talk framework
 
-This file is the handoff for closing the gap between the project's **target paradigm** and what the code actually does today. It is written so a fresh Claude Code session can pick up the work without any prior conversation context. Read top to bottom before touching code.
+This file is the handoff for continuing work on `talk` in a fresh Claude Code session. Read it top to bottom before touching code. `CLAUDE.md` is the north-star doc; this file is the *what's left* doc.
 
 ---
 
 ## 1. What this project is
 
-`talk` is a **reusable presentation framework**. The framework is separate from any specific presentation. Presentations live in their own top-level content folders and are chosen at runtime.
+`talk` is a reusable presentation framework. The framework lives in `src/`; presentations are free-standing content folders anywhere on disk, marked by a `talk.toml` at their root. The framework is shipped as a `talk` CLI on PATH that dispatches into Docker. Three.js + vanilla JS + Vite under the hood.
 
-The repository was originally named `beam-talk` — it started as a 45-minute technical talk on BEAM / Elixir architecture, now archived to `archive/`. The repo now contains only the framework and a placeholder scene.
-
-The framework is a single-page web app: Three.js + vanilla JS + Vite, dev-served out of Docker.
+The repo was originally called `beam-talk` (a 45-minute BEAM/Elixir talk, now in `archive/`). Renamed to `talk` after sub-project A. Don't delete `archive/`; don't reuse its content.
 
 ---
 
-## 2. The paradigm (target state)
+## 2. Sub-project A — done
 
-Five ideas. All of CLAUDE.md's top half restates these; the doc and this file should stay aligned.
+Everything needed for the framework/content split is in place and tested (184 tests passing).
 
-### 2.1 Framework vs content separation
+- `talk` CLI on PATH (symlink `$PWD/talk → ~/.local/bin/talk`)
+- `talk new` scaffolds; `talk add / remove / rename / move / list / lint / serve / test / help / version` all work
+- Structural edits are atomic and support `--dry-run`
+- Content folder is marked by `talk.toml`; walk-up resolution from any subdirectory
+- Scene directories are numeric-prefixed (`01-welcome`, `02-intro`, …)
+- Vite content-loader plugin exposes the mounted content folder via `virtual:content-manifest`
+- Bad scenes render as an error-placeholder card; rest of the deck stays navigable
+- Pure libs under `src/authoring/` (scene-discovery, rename-planner, toml, talk-config) — all TDD-tested
 
-Everything under `src/` is framework code. No presentation content lives in the framework. A presentation is a folder somewhere else in the repo (or potentially outside it) that the framework runs against.
+Spec: `docs/superpowers/specs/2026-04-19-content-folder-foundation-design.md`
+Plan: `docs/superpowers/plans/2026-04-19-content-folder-foundation.md`
 
-### 2.2 Parameterized content folder
-
-The content folder is chosen at run time. It has a top-level, arbitrary name. The dev server and linter take the folder as an argument:
-
-```bash
-talk serve ~/src/my-elixir-talk
-talk lint  ~/src/my-elixir-talk
-```
-
-Multiple presentations can coexist in the repo side-by-side. The framework has no knowledge of any specific presentation.
-
-### 2.3 Reusable components, human-readable authoring
-
-The framework exposes a catalogue of components. Authors compose presentations from these components, specified in a human-readable way — markdown frontmatter + block syntax wherever possible, with fall-through to JS factories for custom behavior.
-
-Components that exist as factories today:
-
-| Component | Factory | Markdown-authored today? |
-|-----------|---------|--------------------------|
-| Content slide | `src/content-slides/scene-factory.js` | Yes |
-| Section slide | `src/section-slides/scene-factory.js` | Yes |
-| Three.js scene | `src/three-scenes/scene-factory.js` | No — JS only |
-| SVG scene | `src/svg-scenes/scene-factory.js` | No — JS only |
-| Title animation | `src/title-animations/scene-factory.js` | No — JS only |
-
-### 2.4 Component-aware linter
-
-The framework supplies a linter that **understands every component it exposes**. For each component reference in content, the linter validates that the content is fully parseable by the framework's understanding of that component.
-
-Example: if a `box-diagram` component exists, the linter identifies uses of it in content and validates each use is structurally complete and renderable. Missing required fields, unknown attributes, malformed children — all should produce actionable, path + line errors.
-
-This is the **critical unique piece** of the paradigm. A generic markdown parser is not enough; the linter needs to know which components exist and what each one's valid content shape is.
-
-### 2.5 Author workflow
-
-1. Edit files in the content folder.
-2. Run `./lint <content-dir>` to verify everything is parseable.
-3. Run `./dev <content-dir>`; changes hot-reload in the browser.
-
-The dev server should also run the linter at startup so authors never accidentally work against an invalid content folder.
+Use these as a template for the next sub-project: brainstorm → spec → plan → execute.
 
 ---
 
-## 3. Current state (April 2026)
+## 3. Open sub-projects
 
-Snapshot of what's actually in the repo right now. Verify with `git log` and `ls` before trusting specifics — things drift.
+Ordered by recommended build order. Each should go through its own brainstorm → spec → plan → execute cycle.
 
-### 3.1 Layout
+### 3.1 Sub-project B — component registry + content-aware linter + in-browser error overlay
 
-```
-/home/shawn/src/talk/
-├── CLAUDE.md              # Describes paradigm (see §2) + current-state gap list
-├── dev                    # Wraps `docker compose up --build`
-├── dev-check              # Probes every JS module for Vite import errors
-├── test                   # Run tests (inside container)
-├── docker-compose.yml     # Vite dev server in a container
-├── Dockerfile
-├── vite.config.js         # Polling watcher, HMR on :3000, openInEditor plugin
-├── index.html
-├── package.json
-├── archive/               # Prior BEAM/Elixir talk content (do not delete, do not reuse)
-│   ├── act-1.md, talk-concept.md, system-design.md, friction-notes.md
-│   └── scenes/            # All prior scenes + `_attic/`
-├── docs/
-│   ├── architecture/      # engine.md, rendering.md, animation.md, authoring.md, scenes.md
-│   ├── markdown-authoring.md
-│   └── examples/          # minimal-markdown.md, minimal-three.js
-├── src/
-│   ├── main.js            # Entry point. Currently imports ONE placeholder scene.
-│   ├── engine/            # Framework: deck/position/navigation
-│   ├── rendering/         # Framework: renderer lifecycle
-│   ├── animation/         # Framework: tween + timeline
-│   ├── commands/          # Framework: command palette
-│   ├── authoring/         # Framework: markdown compiler + validation + dev middleware
-│   ├── content-slides/    # Framework: component factory + markdown bridge
-│   ├── section-slides/    # Framework: component factory + markdown bridge
-│   ├── three-scenes/      # Framework: component factory (Three.js)
-│   ├── svg-scenes/        # Framework: component factory (SVG)
-│   ├── title-animations/  # Framework: component factory + animation variants
-│   ├── shared/            # Framework: colors, session state
-│   ├── debug/             # Framework: debug + nav overlays
-│   ├── types.js           # Framework: JSDoc typedefs
-│   └── scenes/            # CONTENT (lives under src/ today; target is top-level)
-│       └── placeholder/
-│           └── scene.md   # "Ready to author" placeholder
-└── todo.md                # This file
-```
+**Status:** open. Highest-value next step.
 
-### 3.2 Entry point behavior
+**What it is.** Today `talk lint` does structural checks (numbering, duplicates, both `scene.md` + `scene.js` present) plus `talk.toml` schema validation. It does *not* know what a content-slide is, whether a frontmatter key is recognized, whether a title-animation variant exists, etc.
 
-`src/main.js` imports **one scene** (the placeholder) and builds a `SCENE_SOURCES` array by hand:
+B introduces a **component registry**: each component (content-slide, section-slide, three-scene, svg-scene, title-animation) contributes a name, a detector (how to recognize uses of it in content), and a validator (what "valid" looks like). The linter and the runtime both consume this single registry.
 
-```javascript
-import placeholderMd from './scenes/placeholder/scene.md?raw';
-// ...
-const placeholderScene = compileMarkdownScene(placeholderMd);
-const SCENE_SOURCES = [
-  { scene: placeholderScene, path: 'src/scenes/placeholder/scene.md', act: null },
-];
-```
+The runtime side replaces the current minimal error-placeholder card (`src/authoring/scene-placeholder.js`) with a **rich in-browser error overlay** that shows file/line/component context when content fails to parse. This is the mechanism that makes "edit mid-keystroke without crashing the dev server" work robustly — the content-aware validator becomes the runtime error boundary.
 
-`SCENE_SOURCES` defines deck order. Each entry pairs the scene module with its source path so the dev HUD can surface it and the "open in editor" shortcut works.
+**Why it matters.** The user explicitly asked for: "server should handle errors gracefully… we shouldn't crash the whole dev server, we should just inform the user that a component is wrong in some useful way." A minimal version of that ships in A; B makes it production-quality.
 
-### 3.3 Dev server
+**Scope to agree on when starting.**
+- Does `box-diagram` become a first-class component as part of B, or is it deferred to C? CLAUDE.md name-checks it but it doesn't exist.
+- Error format for CLI output: `<file>:<line>:<col> <component> <issue>` (clickable in modern terminals) — proposed, not final.
+- Overlay UX: full-screen error, or overlay-on-top-of-last-good-render so the author keeps their place in the deck?
 
-- `./dev` → `docker compose up --build "$@"` (Docker only; no host tooling)
-- Vite polls files every 200 ms (Docker bind mounts don't propagate inotify reliably)
-- HMR on `:3000`. `import.meta.hot.accept()` in `main.js` does `teardown(); setup()` on any code change, including `.md?raw` content changes.
-- `./dev-check` probes every JS file under `src/` via HTTP to catch Vite import errors. Runs against an existing server on `:3000` or spins up a temporary one. Not content-aware.
+**Affected files.**
+- `bin/talk-lint.js` → rewritten around the registry
+- `src/authoring/scene-placeholder.js` → replaced by richer overlay module
+- Each component dir (`src/content-slides/`, etc.) gains a `validator.js`
+- New `src/authoring/component-registry.js` as the single source of truth
 
-### 3.4 Linter (today)
+### 3.2 Sub-project C — authoring surface (markdown bridges + new components)
 
-`src/authoring/scene-validation.lib.js` — pure function. Validates each scene in the `SCENE_SOURCES` array for:
+**Status:** open. Depends on B.
 
-- `title` is a non-empty string
-- `slides` is a non-empty array
-- Each slide has `stepCount: number >= 1`
-- Required methods exist: `init()`, `destroy()`, `resolveToSlide()`, `animateToSlide()`
+Extend markdown-authored scenes beyond content + section slides:
 
-Returns an array of `{ sceneIndex, title, issues: [...] }`. Called from `src/authoring/scene-validation.js` which logs warnings (never throws). Runs at `setup()` time in `main.js`.
+- Add `type: title-animation` with a `variant:` field (typewriter / drop / zoom-punch / spin-lock / extrude / reverse-explode)
+- For Three.js and SVG scenes: decide whether to support a narrow declarative subset (e.g. `type: three-scene` with `preset: box-diagram`) or keep them JS-only indefinitely
+- Wire `[palette]` from `talk.toml` through to the runtime (the schema already accepts it; no code consumes it yet)
 
-**This is shape validation only. No component-aware parseability.** No "is this bullet list valid", no "is this frontmatter field recognized", no "does this title-animation variant exist".
+**Open question:** is `box-diagram` worth promoting to first-class? If yes, C is the place to build it.
 
-### 3.5 Markdown authoring surface
+**Affected files:** `src/authoring/markdown-scene.lib.js`, each component factory gets a markdown adapter.
 
-`src/authoring/markdown-scene.js` + `markdown-scene.lib.js`. Supports:
+### 3.3 Sub-project D — framework-version drift warning
 
-- Frontmatter: `title` (required), `type` (`content` | `section`, default `content`), plus forwarded options (`subtitle`, `accent`, `bg`, `bgDark`, `text`, `fontSize`, `letterStagger`, nested `colors` map). **Unknown keys pass through silently — no typo warnings.**
-- Block syntax: `#`/`##`/`###` headings, `-`/`*` bullets, fenced code, `>` quotes (optional `— attribution` trailing line), `:spacer:` / `:spacer lg:`, `!muted paragraph`, plain paragraphs, raw HTML passthrough.
-- Slide separator: `---` on its own line (not inside code fences).
-- Token interpolation: `{{tokenName}}` → `colors[tokenName]` at compile time.
+**Status:** open. Small; can slot in between B and C, or be done alongside B.
 
-Bridges to `createContentSlide` (for `type: content`) and `createSectionSlide` (for `type: section`). Does **not** bridge to Three.js, SVG, or title-animation factories.
+`talk.toml` already has a `framework_version` field (typed string, validated by `src/authoring/talk-config.lib.js`). When `talk lint` or `talk serve` runs, the CLI should warn if the content's declared `framework_version` doesn't match the installed `talk` version.
 
-### 3.6 Authoring aids
+Warning, not error — "results may vary" rather than a hard block. Migration tooling is **explicitly deferred** (aspirational only). Just the drift warning.
 
-- `Escape` → command palette (jump to scene / slide / step, reset scene, open source, toggle overlays)
-- `o` → open current scene source in `$EDITOR` (Vite middleware at `/__open-source`)
-- `d` → toggle debug overlay
-- `n` → toggle nav overlay
+**Affected files:** `bin/talk-version` as the source of truth for the current CLI version, new helper in `src/authoring/`, consumed by `bin/talk-lint.js` and `bin/talk-serve`.
 
 ---
 
-## 4. The gap — prioritized backlog
+## 4. Minor cleanups not tied to a sub-project
 
-Ordered foundational-first. Items are roughly independent unless a **Blocked by:** line says otherwise. Each item has a short rationale and a suggested approach, not a spec — adapt as you learn more.
+Do these as the mood strikes or when touching nearby code.
 
-### 4.0 Sub-project decomposition
-
-The remaining paradigm-to-reality gap has been decomposed into four sub-projects,
-each with its own spec and plan under `docs/superpowers/`:
-
-| Sub-project | Scope | Status |
-|-------------|-------|--------|
-| A | Content-folder foundation — `talk` CLI, content-folder separation, rescan+reload | **done** |
-| B | Component registry + content-aware linter + in-browser error overlay | open |
-| C | Markdown bridges for Three.js / SVG / title-animation, new components | open |
-| D | Framework-version drift warning | open |
-
-### 4.1 Parameterize the content folder — **done** (see sub-project A spec + plan)
-
-**Why it's first:** unlocks everything else. Until content lives outside `src/` and the framework reads it from an argument, none of the other paradigm claims can hold up.
-
-**Suggested approach:**
-
-1. Create a top-level `content/` directory (convention, not requirement) and move `src/scenes/placeholder/` to `content/placeholder/` (or similar sample folder).
-2. Accept a content-folder path as a CLI argument to `./dev` and `./lint`. Pass it to the Vite container via an environment variable — e.g. `CONTENT_DIR=content/placeholder`.
-3. Plumb `CONTENT_DIR` into Vite. Options:
-   - **Virtual module** — a Vite plugin that exposes `virtual:content-manifest` by scanning `CONTENT_DIR` at load time. Cleanest.
-   - **Alias** — `resolve.alias: { '~content': path.resolve(process.env.CONTENT_DIR) }` plus a literal `import.meta.glob('~content/**/*.{md,js}')`. Simpler but glob patterns still need literal prefixes in Vite.
-4. `main.js` imports the manifest, iterates, builds `SCENE_SOURCES` dynamically.
-5. Default: if no content folder is passed, error out with a helpful message.
-
-**Affected files:** `dev`, `dev-check`, `vite.config.js`, `src/main.js`, new plugin under `src/authoring/` (e.g. `content-manifest-plugin.js`).
-
-### 4.2 Auto-discover scenes from the content folder — **done** (see sub-project A spec + plan)
-
-**Why:** the paradigm promises that authors drop a folder in and it appears in the deck. Manual `SCENE_SOURCES` registration is the opposite of that.
-
-**Blocked by:** 4.1 (needs `CONTENT_DIR` to know where to scan).
-
-**Suggested approach:**
-
-1. Content folder structure: `<content-dir>/<nn>-<slug>/scene.{md,js}`. The `nn-` prefix is the sorting hint; the manifest sorts by directory name.
-2. For each directory found, the manifest resolves to either the markdown source (compiled via `compileMarkdownScene`) or the JS scene module (used as-is).
-3. Source path carried alongside each scene so the "open in editor" shortcut keeps working.
-4. Remove the hand-written `SCENE_SOURCES` list in `main.js`.
-
-**Affected files:** whichever plugin / module came out of 4.1; `src/main.js`.
-
-### 4.3 `./lint` script and content-aware validation
-
-**Why:** the paradigm claims a linter that understands components. Today there's shape validation and nothing content-aware.
-
-**Blocked by:** 4.1 (linter needs to know which content folder to validate).
-
-**Suggested approach:**
-
-1. New script at repo root: `./lint`. Runs the linter in the container against the given content folder. Exit non-zero on any error.
-2. Design a **component registry**: each component (content-slide, section-slide, three-scene, svg-scene, title-animation) contributes (a) a name, (b) how to recognize uses in content, (c) a validator for those uses. Single source of truth that the linter and the runtime both read from.
-3. First pass of validators:
-   - **Content slide frontmatter** — reject unknown keys, type-check values.
-   - **Section slide frontmatter** — same.
-   - **Markdown block shape** — detect unclosed code fences, malformed frontmatter, bullets at wrong indent, etc.
-   - **JS scene contract** — reuse existing `validateScenesLib` as a starting point.
-   - **Title-animation variant names** — if a JS scene uses `createTitleScene({ animation: '...' })`, validate the variant exists.
-4. Error format: `<file>:<line>:<col> <component> <issue>`. Must be clickable in modern terminals.
-5. Wire the linter into dev-server startup so the user sees errors immediately.
-
-**Affected files:** new `lint` script, new `src/authoring/lint.js` (or similar), `src/authoring/scene-validation.lib.js` (refactor into registry), each component directory gains a `validator.js`.
-
-### 4.4 Markdown bridges for Three.js, SVG, title animations
-
-**Why:** paradigm promises human-readable authoring wherever possible. Forcing JS for every animated title defeats it.
-
-**Suggested approach:**
-
-- Add a `type:` in frontmatter beyond `content` / `section` — e.g. `type: title-animation` with a `variant:` field. Bridge to `createTitleScene`.
-- For Three.js and SVG scenes, a markdown bridge is harder because their content is imperative. Consider a narrower "declarative" subset: e.g. `type: three-scene` with a `preset: box-diagram` referencing a parameterized pre-built scene. Don't try to express arbitrary Three.js in markdown.
-- Explicit decision to make: do we want a "box diagram" as a first-class component? CLAUDE.md name-checks it. Answer informs what markdown bridges are even worth building.
-
-**Affected files:** `src/authoring/markdown-scene.lib.js`, each component's factory gets a markdown adapter.
-
-### 4.5 Remove archival / talk-specific leftovers
-
-**Why:** the framework should carry no talk-specific content.
-
-**Check and, if appropriate, edit:**
-
-- `docs/architecture/scenes.md` — might still reference `src/scenes/...` paths by convention.
-- `docs/markdown-authoring.md` — examples may use BEAM-specific tokens like `{{beam}}`.
-- `docs/examples/minimal-markdown.md`, `docs/examples/minimal-three.js` — ensure neutral.
-- `src/shared/colors.js` — inspect; may still carry talk-specific palette names. Decide whether to keep as the framework's default palette or allow the content folder to supply its own palette. (Paradigm arguably says the latter.)
-
-### 4.6 Nice-to-haves (after the core is solid)
-
-- **Content folder has its own palette** (`palette.js` or palette frontmatter) that overrides the framework default.
-- **Per-presentation config file** at the root of a content folder: `presentation.json` or similar. Title, theme, author, etc.
-- **Browser test harness** for markdown → render parity (today there's unit-level testing of libs but not end-to-end).
-- **Package the framework** so it can be consumed by a content folder in a separate repo (`npm install talk`).
+- **`docs/architecture/*.md` and `docs/markdown-authoring.md`** — audit for stale `src/scenes/` path references and any BEAM-specific tokens (`{{beam}}`). The framework itself is now content-neutral.
+- **`src/shared/colors.js`** — still carries the framework default palette with names that may be talk-specific. Decide: keep as the single default palette, or allow content folders to fully replace it via their `[palette]` table (C handles this).
+- **Browser test harness** — today's 184 tests cover pure libs and CLI integration. End-to-end (markdown → rendered DOM parity) is manual. Not urgent; worth it if we see rendering regressions sneak in.
+- **Package as an npm lib** (`npm install talk`) — makes content folders fully portable into their own repos. Not needed for local-first use; nice-to-have for distribution.
 
 ---
 
-## 5. Key files — quick map
+## 5. Starting a fresh session
 
-Read these first when starting a session:
-
-- `CLAUDE.md` — paradigm + current-state summary (north-star doc)
-- `todo.md` — this file (handoff)
-- `src/main.js` — entry point; scene registration happens here
-- `src/authoring/markdown-scene.lib.js` — markdown compiler (pure)
-- `src/authoring/scene-validation.lib.js` — current (shape-only) linter
-- `src/engine/engine.js` + `engine.lib.js` — deck/navigation/HMR seams
-- `vite.config.js` — HMR, polling, `openInEditorPlugin`
-- `dev`, `dev-check`, `test` — all Docker-based; no host deps
-- `docs/architecture/*.md` — per-layer one-pagers; check for drift after big changes
+1. Read `CLAUDE.md` top to bottom.
+2. Read this `todo.md` top to bottom.
+3. Run `talk test` (from the framework repo) and confirm 184 tests pass before editing anything.
+4. Pick a sub-project from §3. Default: B.
+5. For each sub-project, walk through the full cycle:
+   - **Brainstorm** (superpowers:brainstorming) — define author experience + decisions before mechanism
+   - **Spec** → `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md`
+   - **Plan** (superpowers:writing-plans) → `docs/superpowers/plans/…`
+   - **Execute** (superpowers:subagent-driven-development) — one subagent per task, spec review + code quality review between tasks
 
 ---
 
-## 6. Constraints and quirks
+## 6. Key files
 
-- **Docker-only.** Nothing is installed on the host. Always run commands via `./dev`, `./test`, `./dev-check`. Vite runs at `http://localhost:3000` inside the `app-1` container.
-- **Polling watcher.** Don't trust inotify. If HMR looks flaky, check that `watch.usePolling` is still `true` in `vite.config.js`.
-- **Scripts are extensionless.** Never add `.sh`.
-- **TDD + pure-function separation.** Logic in `*.lib.js`, tests in `*.lib.test.js`, side effects elsewhere. Match existing style.
-- **Determinism guarantee in scenes.** `resolveToSlide(n)` must produce identical visual state whether reached by animation or direct jump. Don't accidentally make slide state a delta.
-- **On-demand rendering.** Three.js scenes don't animate continuously; call `renderer.markDirty()` after mutating objects.
-- **Colors.** Import from `src/shared/colors.js`. Never hardcode hex values.
-- **Commit hygiene.** Small, focused commits. No force-pushes, no `--no-verify`. See recent `git log` for message style.
+- `CLAUDE.md` — north-star doc (paradigm, architecture, component catalogue, commit discipline)
+- `docs/superpowers/specs/2026-04-19-content-folder-foundation-design.md` — A's design
+- `docs/superpowers/plans/2026-04-19-content-folder-foundation.md` — A's task-by-task plan (template for B/C/D)
+- `talk` + `bin/talk-*` — the CLI
+- `src/authoring/content-loader-plugin.js` — Vite plugin that exposes `virtual:content-manifest` (hook point for B's error overlay)
+- `src/authoring/scene-placeholder.js` — minimal runtime error card; B replaces with a richer overlay
+- `src/authoring/*.lib.js` — pure libs consumed by every subcommand
+- `templates/new-talk/` — what `talk new` copies
+- `fixtures/sample-talk/` — fixture used by CLI integration tests
 
 ---
 
-## 7. How to start a fresh session
+## 7. Constraints and quirks (short form — see CLAUDE.md for details)
 
-1. `git status` and `git log --oneline -10` to catch up on drift.
-2. Read `CLAUDE.md` top to bottom.
-3. Read this `todo.md` top to bottom.
-4. Pick one item from §4. Start with 4.1 if it's not done; otherwise go in order.
-5. Before editing, sanity-check by running `./dev-check` — the framework should boot cleanly. If it doesn't, fix that first.
-6. Use the plan mode / ExitPlanMode workflow for non-trivial items (anything in §4.1–§4.4 qualifies).
+- **Use `jj`, never `git`.** Colocated git+jj repo.
+- **Docker-only runtime.** `talk test` runs the suite inside Docker. No host Node needed for day-to-day (a host Node is used by `talk new` and `talk version` as trivial exceptions).
+- **Vite uses polling in Docker** (inotify isn't reliable through bind mounts).
+- **TDD + pure-function separation.** Logic in `*.lib.js`, tests in `*.lib.test.js`.
+- **No `.sh` suffixes** on scripts.
+- **Scene `resolveToSlide(n)` must be deterministic** — identical visual state whether reached by animating through or jumping directly.
+- **On-demand rendering for Three.js scenes** — call `renderer.markDirty()` after mutating objects; never assume a render loop.
+- **Never hardcode hex colors** — import from `src/shared/colors.js`.
+- **Small, focused commits. Never `--no-verify`. Never force-push.**
 
 ---
 
 ## 8. Decisions still open
 
-Flag these to the user before building them:
+Flag these before building.
 
-- **Does a `box-diagram` component exist?** CLAUDE.md uses it as the illustrative example for the linter. It isn't implemented yet. Decide whether it's the first content-aware component to build or just a rhetorical example.
-- **Is the framework eventually packaged as an npm library** consumed by content repos elsewhere? If yes, some choices (directory structure, package name, public API surface) get more consequential earlier.
-- **Content-folder conventions:** require `presentation.json` / a manifest file, or infer everything from directory structure? Leaning toward "pure directory convention, no manifest file" for simplicity, but that's not a final decision.
-- **Palette sourcing:** framework default always, or content folder can supply its own? Paradigm arguably prefers the latter.
+- **`box-diagram` as a first-class component** — CLAUDE.md name-checks it as the canonical "component with content-aware validation" example. Not implemented. Decide during B or C.
+- **Palette sourcing at runtime** — framework default only, or content folder can override via `[palette]` in `talk.toml`? Schema already accepts it; just not wired through. Good candidate for C.
+- **Declarative subset for Three.js / SVG scenes** — is a `preset:`-based markdown bridge worth building, or should those stay JS-only? Depends on how many Three.js scenes a typical content folder actually has.
+- **npm packaging** — make `talk` installable as a real package, or keep the symlinked-script distribution model? Symlink works fine for single-author use; packaging matters if you want content repos to install the framework elsewhere.
