@@ -4,15 +4,30 @@ All notable changes to this project are recorded in this file. Version numbers f
 
 ## [Unreleased]
 
+## [0.2.0] — 2026-04-19
+
 ### Added
-- Syntax highlighting for fenced code blocks via `highlight.js` (core + 10 languages: bash, elixir, javascript, json, python, rust, sql, typescript, xml/html, yaml). Token colours map to the framework palette in `src/shared/colors.js` — no external theme CSS. Unknown languages fall through to plain `<pre><code>` as before.
+- Syntax highlighting for fenced code blocks via `highlight.js` (core + 10 languages: bash, elixir, javascript, json, python, rust, sql, typescript, xml/html, yaml). Token colours map to the framework palette in `src/shared/colors.js` — no external theme CSS. The bundle is lazy-loaded so the linter and framework tests stay dependency-free.
+- `examples/` directory — five runnable mini-decks (essentials, box-diagrams, 3d-scene, svg-scene, title-animation) covering every registered component. Each is served with `talk serve examples/<name>/`.
+- Top-level `README.md` — public-facing overview: install, quick start, concepts (deck / scene / slide / step), authoring approach, CLI reference, dev-mode UX, and per-component documentation.
 
 ### Changed (BREAKING)
 - Renamed the Three.js scene component from `three-scene` to `3d-scene`. Author-facing surface affected: the directory (`src/components/3d-scene/`), the registry descriptor (`name: '3d-scene'`, `matcher: { factoryExport: 'create3DScene' }`), the factory function (`create3DScene` — `createThreeScene` is gone), the example deck (`examples/3d-scene/`), and the typedefs (`Scene3DConfig`, `Scene3DSetupContext`, `Scene3DStepContext`, `Scene3DAnimateContext`). The renderer implementation file `src/rendering/three-scene.js` and its exported `createThreeRenderer` stay as-is — that layer is a thin Three.js wrapper and the old name reflects what it literally is.
 
 ### Fixed
-- Saved scene/slide/step position is now scoped to the current deck (via `talk.toml`'s `title`). Loading a different deck starts fresh at scene 1 / slide 1 instead of restoring the prior deck's coordinates.
+- Root font-size now scales with the 16:9 stage, so all `rem`-based typography (content-slide, section-slide, code-fence, box-diagram, spacer, quote) fits the viewport proportionally instead of overflowing on small screens or leaving huge gutters on large ones. 1rem = 16px at the canonical 1920px stage width.
+- Browser tab title now reflects the current deck's `talk.toml` title instead of the hardcoded legacy string. Multiple decks open in different tabs are distinguishable.
+- Saved scene/slide/step position is scoped to the current deck. Loading a different deck starts fresh at scene 1 / slide 1 instead of restoring the prior deck's coordinates.
 - `talk serve` no longer passes `--build` to `docker compose up`. The framework source is bind-mounted, so the built image was always shadowed; the flag just added latency on every startup. When a dependency is added or bumped in `package.json`, run `docker compose run --rm app npm install` to refresh the `node_modules` volume.
+- `examples/svg-scene/` replaced with a memory-hierarchy bar chart (L1 / L2 / main memory drawn to linear scale). The previous three-dots-and-a-line didn't demonstrate anything the box-diagram component couldn't do.
+
+### Repo hygiene
+- Added LICENSE (MIT).
+- `package.json` gained description, keywords, author, repository, homepage, bugs, and `engines` fields; dropped `"private": true`; renamed to `talk-framework` to avoid conflict with a squatted npm package.
+- `.gitignore` now excludes AI/tool-specific state (`.claude/`, `.serena/`, `.superpowers/`) and the internal `docs/superpowers/plans/` directory (specs still ship).
+- Added `.nvmrc` pinning Node 22.
+- Removed the legacy `archive/` directory (pre-framework BEAM talk content, no longer maintained).
+- Trimmed `todo.md` to reflect the post-B state.
 
 ## [0.1.0] — 2026-04-19
 
