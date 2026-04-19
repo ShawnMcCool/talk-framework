@@ -92,3 +92,9 @@ test('bootstrap: svg-scene is registered', () => {
   assert.ok(c);
   assert.equal(c.kind, 'js-factory');
 });
+
+test('bootstrap: title-animation is registered', () => {
+  const c = registry.getByName('title-animation');
+  assert.ok(c);
+  assert.equal(c.kind, 'js-factory');
+});
