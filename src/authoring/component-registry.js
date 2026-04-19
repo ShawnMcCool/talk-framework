@@ -3,6 +3,7 @@ import { component as sectionSlide } from '../components/section-slide/component
 import { component as threeScene } from '../components/three-scene/component.js';
 import { component as svgScene } from '../components/svg-scene/component.js';
 import { component as titleAnimation } from '../components/title-animation/component.js';
+import { component as heading } from '../components/heading/component.js';
 
 const VALID_KINDS = new Set(['scene-type', 'markdown-block', 'js-factory']);
 
@@ -76,3 +77,4 @@ registry.register(sectionSlide);
 registry.register(threeScene);
 registry.register(svgScene);
 registry.register(titleAnimation);
+registry.register(heading);

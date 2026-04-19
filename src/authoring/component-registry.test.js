@@ -98,3 +98,10 @@ test('bootstrap: title-animation is registered', () => {
   assert.ok(c);
   assert.equal(c.kind, 'js-factory');
 });
+
+test('bootstrap: heading is registered', () => {
+  const c = registry.getByName('heading');
+  assert.ok(c);
+  assert.equal(c.kind, 'markdown-block');
+  assert.equal(registry.getByBlockType('heading'), c);
+});
