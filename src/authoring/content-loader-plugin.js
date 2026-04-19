@@ -15,6 +15,8 @@ import path from 'node:path';
 import { discoverScenes } from './scene-discovery.lib.js';
 import { parseToml } from './toml.lib.js';
 import { validateTalkConfig } from './talk-config.lib.js';
+import { parseMarkdownScene } from './markdown-scene.lib.js';
+import { registry } from './component-registry.js';
 
 const VIRTUAL_ID = 'virtual:content-manifest';
 const RESOLVED_ID = '\0' + VIRTUAL_ID;
@@ -37,6 +39,19 @@ export function contentLoaderPlugin(options = {}) {
         if (mod) {
           server.moduleGraph.invalidateModule(mod);
           server.ws.send({ type: 'full-reload' });
+        }
+
+        // Emit diagnostics for markdown scene files when they change.
+        if (changed.endsWith('/scene.md')) {
+          try {
+            // Extract sceneId: the path segment between contentRoot/ and /scene.md.
+            const rel = changed.slice(contentRoot.length + 1); // e.g. "01-intro/scene.md"
+            const sceneId = rel.slice(0, rel.length - '/scene.md'.length); // e.g. "01-intro"
+            const diagnostics = collectSceneDiagnostics(sceneId, changed);
+            server.ws.send({ type: 'custom', event: 'talk:diagnostics', data: { sceneId, diagnostics } });
+          } catch (err) {
+            console.error('[talk:content-loader] diagnostics emit error:', err);
+          }
         }
       });
     },
@@ -123,6 +138,70 @@ function listEntries(dir) {
     }
     return { name: d.name, isDirectory, hasSceneMd, hasSceneJs };
   });
+}
+
+/**
+ * Parse a scene.md file and return an array of diagnostic records.
+ * On parse failure, returns a single scene-type error diagnostic.
+ * On success with no issues, returns [].
+ */
+function collectSceneDiagnostics(sceneId, sceneMdPath) {
+  try {
+    const src = fs.readFileSync(sceneMdPath, 'utf8');
+    let parsed;
+    try {
+      parsed = parseMarkdownScene(src, {});
+    } catch (err) {
+      return [{
+        severity: 'error',
+        component: 'scene-type',
+        file: `${sceneId}/scene.md`,
+        line: 1, column: 1,
+        message: err.message,
+      }];
+    }
+
+    const diagnostics = [];
+
+    for (const slide of parsed.slides) {
+      for (const block of slide) {
+        if (block.type === 'code' && block.language) {
+          const custom = registry.getByInfoString(block.language);
+          if (custom && custom.validate) {
+            const data = custom.parse ? custom.parse(block.code, {
+              file: `${sceneId}/scene.md`,
+              blockStartLine: block.line || 1,
+            }) : block.code;
+            const diags = custom.validate(data, {
+              file: `${sceneId}/scene.md`,
+              blockStartLine: block.line || 1,
+            });
+            for (const d of diags) diagnostics.push(d);
+          }
+          continue;
+        }
+
+        const builtin = registry.getByBlockType(block.type);
+        if (builtin && builtin.validate) {
+          const diags = builtin.validate(block, {
+            file: `${sceneId}/scene.md`,
+            blockStartLine: 1,
+          });
+          for (const d of diags) diagnostics.push(d);
+        }
+      }
+    }
+
+    return diagnostics;
+  } catch (err) {
+    return [{
+      severity: 'error',
+      component: 'scene-type',
+      file: `${sceneId}/scene.md`,
+      line: 1, column: 1,
+      message: err.message,
+    }];
+  }
 }
 
 function errorModule(message) {
