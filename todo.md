@@ -170,7 +170,19 @@ Bridges to `createContentSlide` (for `type: content`) and `createSectionSlide` (
 
 Ordered foundational-first. Items are roughly independent unless a **Blocked by:** line says otherwise. Each item has a short rationale and a suggested approach, not a spec — adapt as you learn more.
 
-### 4.1 Parameterize the content folder
+### 4.0 Sub-project decomposition
+
+The remaining paradigm-to-reality gap has been decomposed into four sub-projects,
+each with its own spec and plan under `docs/superpowers/`:
+
+| Sub-project | Scope | Status |
+|-------------|-------|--------|
+| A | Content-folder foundation — `talk` CLI, content-folder separation, rescan+reload | **done** |
+| B | Component registry + content-aware linter + in-browser error overlay | open |
+| C | Markdown bridges for Three.js / SVG / title-animation, new components | open |
+| D | Framework-version drift warning | open |
+
+### 4.1 Parameterize the content folder — **done** (see sub-project A spec + plan)
 
 **Why it's first:** unlocks everything else. Until content lives outside `src/` and the framework reads it from an argument, none of the other paradigm claims can hold up.
 
@@ -186,7 +198,7 @@ Ordered foundational-first. Items are roughly independent unless a **Blocked by:
 
 **Affected files:** `dev`, `dev-check`, `vite.config.js`, `src/main.js`, new plugin under `src/authoring/` (e.g. `content-manifest-plugin.js`).
 
-### 4.2 Auto-discover scenes from the content folder
+### 4.2 Auto-discover scenes from the content folder — **done** (see sub-project A spec + plan)
 
 **Why:** the paradigm promises that authors drop a folder in and it appears in the deck. Manual `SCENE_SOURCES` registration is the opposite of that.
 
