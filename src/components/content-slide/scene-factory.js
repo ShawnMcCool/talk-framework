@@ -162,18 +162,21 @@ export function createContentSlide(title, slides, opts = {}) {
     return document.createElement('div');
   }
 
-  function renderSlide(slideBlocks, stepIndex, animated) {
+  // `slideSteps` is Array<Array<Block>>: outer = reveal steps, inner = blocks
+  // shown together within that step. By default a slide is one step containing
+  // every block; `+++` in the markdown source splits further.
+  function renderSlide(slideSteps, stepIndex, animated) {
     const wrap = document.createElement('div');
     wrap.className = `${id}-wrap`;
 
-    slideBlocks.forEach((block, i) => {
+    slideSteps.forEach((stepBlocks, i) => {
       const slot = document.createElement('div');
       const visible = i <= stepIndex;
       slot.className = animated
         ? `${id}-block${visible ? ' visible' : ''}`
         : `${id}-block${visible ? ' instant' : ''}`;
       if (animated && visible) slot.style.transitionDelay = `${i * 80}ms`;
-      slot.appendChild(renderBlock(block));
+      for (const block of stepBlocks) slot.appendChild(renderBlock(block));
       wrap.appendChild(slot);
     });
 

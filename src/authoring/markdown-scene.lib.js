@@ -112,15 +112,36 @@ export function parseSlideBody(body) {
   return slideChunks.map(parseSlideBlocks);
 }
 
+/**
+ * Parse a single slide's lines into a sequence of reveal steps. Each step
+ * is an array of blocks that appear together.
+ *
+ * By default a slide has ONE step containing every block — authors get
+ * "show the whole slide at once" behaviour. A line containing exactly `+++`
+ * splits the slide into additional steps. Consecutive `+++`s and leading/
+ * trailing `+++`s are elided (they'd yield empty steps).
+ *
+ * @param {string[]} lines
+ * @returns {Array<Array<object>>} steps — outer array = steps, inner = blocks
+ */
 function parseSlideBlocks(lines) {
-  const blocks = [];
+  const steps = [[]];
   let i = 0;
+
+  const push = (block) => { steps[steps.length - 1].push(block); };
 
   while (i < lines.length) {
     const line = lines[i];
     const trimmed = line.trim();
 
     if (trimmed === '') { i++; continue; }
+
+    // Step separator
+    if (trimmed === '+++') {
+      steps.push([]);
+      i++;
+      continue;
+    }
 
     // Fenced code
     if (/^```/.test(trimmed)) {
@@ -133,14 +154,14 @@ function parseSlideBlocks(lines) {
         i++;
       }
       i++; // consume closing fence
-      blocks.push({ type: 'code', code: codeLines.join('\n'), language: lang || '', line: openLine + 1 });
+      push({ type: 'code', code: codeLines.join('\n'), language: lang || '', line: openLine + 1 });
       continue;
     }
 
     // Heading
     const h = trimmed.match(/^(#{1,3})\s+(.+)$/);
     if (h) {
-      blocks.push({ type: 'heading', text: h[2], level: h[1].length, line: i + 1 });
+      push({ type: 'heading', text: h[2], level: h[1].length, line: i + 1 });
       i++;
       continue;
     }
@@ -153,7 +174,7 @@ function parseSlideBlocks(lines) {
         items.push(lines[i].replace(/^\s*[-*]\s+/, ''));
         i++;
       }
-      blocks.push({ type: 'bullets', items, line: startLine });
+      push({ type: 'bullets', items, line: startLine });
       continue;
     }
 
@@ -174,7 +195,7 @@ function parseSlideBlocks(lines) {
       }
       const block = { type: 'quote', text: qLines.join(' ').trim(), line: startLine };
       if (attribution) block.attribution = attribution;
-      blocks.push(block);
+      push(block);
       continue;
     }
 
@@ -183,7 +204,7 @@ function parseSlideBlocks(lines) {
     if (dir) {
       const block = { type: dir[1], line: i + 1 };
       if (dir[2]) block.size = dir[2];
-      blocks.push(block);
+      push(block);
       i++;
       continue;
     }
@@ -195,6 +216,7 @@ function parseSlideBlocks(lines) {
       const l = lines[i];
       const t = l.trim();
       if (t === '') break;
+      if (t === '+++') break;
       if (/^(#{1,3})\s+/.test(t)) break;
       if (/^[-*]\s+/.test(t)) break;
       if (/^>\s?/.test(t)) break;
@@ -208,10 +230,11 @@ function parseSlideBlocks(lines) {
     if (muted) text = text.replace(/^!muted\s*/, '');
     const block = { type: 'text', text, line: startLine };
     if (muted) block.muted = true;
-    blocks.push(block);
+    push(block);
   }
 
-  return blocks;
+  // Drop empty steps (leading, trailing, or back-to-back +++s).
+  return steps.filter(step => step.length > 0);
 }
 
 /**

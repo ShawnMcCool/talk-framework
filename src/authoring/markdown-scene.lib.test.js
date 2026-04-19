@@ -73,6 +73,9 @@ title: Empty
   });
 });
 
+// Each slide is now Array<Array<Block>> — outer = reveal steps, inner = blocks
+// shown together. Default is ONE step containing every block; `+++` on its
+// own line splits the slide into additional steps.
 describe('parseSlideBody', () => {
   it('splits slides on --- lines', () => {
     const body = `# Slide 1
@@ -86,19 +89,18 @@ describe('parseSlideBody', () => {
 
   it('parses a heading block', () => {
     const slides = parseSlideBody('# Big Title');
-    assert.deepEqual(slides[0][0], { type: 'heading', text: 'Big Title', level: 1, line: 1 });
+    assert.deepEqual(slides[0][0][0], { type: 'heading', text: 'Big Title', level: 1, line: 1 });
   });
 
   it('parses h2 and h3 with correct levels', () => {
     const slides = parseSlideBody('## Sub\n\n### Label');
-    assert.equal(slides[0][0].level, 2);
-    assert.equal(slides[0][1].level, 3);
+    assert.equal(slides[0][0][0].level, 2);
+    assert.equal(slides[0][0][1].level, 3);
   });
 
   it('collects consecutive bullets into one bullets block', () => {
     const slides = parseSlideBody('- alpha\n- beta\n- gamma');
-    assert.equal(slides[0].length, 1);
-    assert.deepEqual(slides[0][0], {
+    assert.deepEqual(slides[0][0][0], {
       type: 'bullets',
       items: ['alpha', 'beta', 'gamma'],
       line: 1,
@@ -107,17 +109,17 @@ describe('parseSlideBody', () => {
 
   it('supports * as bullet marker', () => {
     const slides = parseSlideBody('* one\n* two');
-    assert.deepEqual(slides[0][0], { type: 'bullets', items: ['one', 'two'], line: 1 });
+    assert.deepEqual(slides[0][0][0], { type: 'bullets', items: ['one', 'two'], line: 1 });
   });
 
   it('parses a blockquote', () => {
     const slides = parseSlideBody('> Make it work.');
-    assert.deepEqual(slides[0][0], { type: 'quote', text: 'Make it work.', line: 1 });
+    assert.deepEqual(slides[0][0][0], { type: 'quote', text: 'Make it work.', line: 1 });
   });
 
   it('attaches attribution from trailing — line inside quote', () => {
     const slides = parseSlideBody('> A wise quote.\n> — Someone Famous');
-    assert.deepEqual(slides[0][0], {
+    assert.deepEqual(slides[0][0][0], {
       type: 'quote',
       text: 'A wise quote.',
       line: 1,
@@ -127,7 +129,7 @@ describe('parseSlideBody', () => {
 
   it('parses a fenced code block', () => {
     const slides = parseSlideBody('```js\nconst x = 1;\n```');
-    assert.deepEqual(slides[0][0], {
+    assert.deepEqual(slides[0][0][0], {
       type: 'code',
       code: 'const x = 1;',
       language: 'js',
@@ -137,7 +139,7 @@ describe('parseSlideBody', () => {
 
   it('parses text paragraph', () => {
     const slides = parseSlideBody('Some prose.\nWith two lines.');
-    assert.deepEqual(slides[0][0], {
+    assert.deepEqual(slides[0][0][0], {
       type: 'text',
       text: 'Some prose. With two lines.',
       line: 1,
@@ -146,7 +148,7 @@ describe('parseSlideBody', () => {
 
   it('marks a paragraph as muted when prefixed with !muted', () => {
     const slides = parseSlideBody('!muted Quiet voice.');
-    assert.deepEqual(slides[0][0], {
+    assert.deepEqual(slides[0][0][0], {
       type: 'text',
       text: 'Quiet voice.',
       line: 1,
@@ -156,33 +158,56 @@ describe('parseSlideBody', () => {
 
   it('recognises :spacer: as a spacer block', () => {
     const slides = parseSlideBody(':spacer:');
-    assert.deepEqual(slides[0][0], { type: 'spacer', line: 1 });
+    assert.deepEqual(slides[0][0][0], { type: 'spacer', line: 1 });
   });
 
   it('recognises :spacer lg: as a large spacer', () => {
     const slides = parseSlideBody(':spacer lg:');
-    assert.deepEqual(slides[0][0], { type: 'spacer', size: 'lg', line: 1 });
+    assert.deepEqual(slides[0][0][0], { type: 'spacer', size: 'lg', line: 1 });
   });
 
-  it('separates blocks across blank lines', () => {
+  it('treats a whole slide as one reveal step by default', () => {
     const slides = parseSlideBody('# Heading\n\n- bullet one\n- bullet two\n\nparagraph');
-    assert.equal(slides[0].length, 3);
-    assert.equal(slides[0][0].type, 'heading');
-    assert.equal(slides[0][1].type, 'bullets');
-    assert.equal(slides[0][2].type, 'text');
+    assert.equal(slides[0].length, 1);                // one step
+    assert.equal(slides[0][0].length, 3);              // three blocks in that step
+    assert.equal(slides[0][0][0].type, 'heading');
+    assert.equal(slides[0][0][1].type, 'bullets');
+    assert.equal(slides[0][0][2].type, 'text');
   });
 
-  it('handles an empty slide as empty block array', () => {
+  it('splits a slide into steps at +++ lines', () => {
+    const slides = parseSlideBody('# Heading\n\n+++\n\n- a\n- b\n\n+++\n\nparagraph');
+    assert.equal(slides[0].length, 3);
+    assert.equal(slides[0][0][0].type, 'heading');
+    assert.equal(slides[0][1][0].type, 'bullets');
+    assert.equal(slides[0][2][0].type, 'text');
+  });
+
+  it('drops leading, trailing, and consecutive +++ separators', () => {
+    const slides = parseSlideBody('+++\n\n# A\n\n+++\n+++\n\n# B\n\n+++');
+    assert.equal(slides[0].length, 2);
+    assert.equal(slides[0][0][0].text, 'A');
+    assert.equal(slides[0][1][0].text, 'B');
+  });
+
+  it('ignores +++ inside a fenced code block', () => {
+    const slides = parseSlideBody('```\nbefore\n+++\nafter\n```');
+    assert.equal(slides[0].length, 1);
+    assert.equal(slides[0][0][0].type, 'code');
+    assert.match(slides[0][0][0].code, /before\n\+\+\+\nafter/);
+  });
+
+  it('handles an empty slide as zero steps', () => {
     const slides = parseSlideBody('# First\n\n---\n\n---\n\n# Last');
     assert.equal(slides.length, 3);
     assert.equal(slides[1].length, 0);
-    assert.equal(slides[2][0].text, 'Last');
+    assert.equal(slides[2][0][0].text, 'Last');
   });
 
   it('ignores leading/trailing whitespace in body', () => {
     const slides = parseSlideBody('\n\n# Heading\n\n');
     assert.equal(slides.length, 1);
-    assert.equal(slides[0][0].type, 'heading');
+    assert.equal(slides[0][0][0].type, 'heading');
   });
 });
 
@@ -206,10 +231,10 @@ type: content
     assert.equal(parsed.title, 'Why BEAM?');
     assert.equal(parsed.type, 'content');
     assert.equal(parsed.slides.length, 2);
-    assert.equal(parsed.slides[0][0].type, 'heading');
-    assert.equal(parsed.slides[0][1].items.length, 2);
-    assert.equal(parsed.slides[1][0].type, 'quote');
-    assert.equal(parsed.slides[1][0].attribution, 'Joe');
+    assert.equal(parsed.slides[0][0][0].type, 'heading');
+    assert.equal(parsed.slides[0][0][1].items.length, 2);
+    assert.equal(parsed.slides[1][0][0].type, 'quote');
+    assert.equal(parsed.slides[1][0][0].attribution, 'Joe');
   });
 
   it('defaults type to content', () => {
@@ -245,7 +270,7 @@ title: X
 
 - Designed for <strong style="color:{{beam}}">telecom</strong>`;
     const parsed = parseMarkdownScene(src, { beam: '#FF9500' });
-    assert.equal(parsed.slides[0][0].items[0],
+    assert.equal(parsed.slides[0][0][0].items[0],
       'Designed for <strong style="color:#FF9500">telecom</strong>');
   });
 
@@ -288,8 +313,10 @@ code
 `;
     const { slides } = parseMarkdownScene(src, {});
     for (const slide of slides) {
-      for (const block of slide) {
-        assert.ok(typeof block.line === 'number' && block.line >= 1, `expected block.line on ${block.type}`);
+      for (const step of slide) {
+        for (const block of step) {
+          assert.ok(typeof block.line === 'number' && block.line >= 1, `expected block.line on ${block.type}`);
+        }
       }
     }
   });

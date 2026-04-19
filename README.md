@@ -94,7 +94,18 @@ In a JS scene, slides are declared explicitly: `slides: [{ stepCount: 3 }, { ste
 
 ### Step
 
-Within a slide, each block (heading, bullets, code fence, etc.) is revealed progressively as a separate **step**. Step `0` shows just block 0; step `N` shows blocks `0..N`. Arrow-key navigation cycles through every step of every slide of every scene in order.
+A slide reveals in one or more **steps**. By default a slide is a single step — every block shows at once. Put `+++` on its own line to split a slide into additional steps; step `0` shows the blocks before the first `+++`, step `1` adds the blocks up to the next `+++`, and so on. Arrow-key navigation cycles through every step of every slide of every scene in order.
+
+```markdown
+# Principles
+
+A short intro paragraph.
+
++++
+
+- bullet that lands on click
+- another bullet
+```
 
 **Determinism:** `resolveToSlide(n)` must produce identical visual state whether reached by animating through slides `0..n` or jumping directly. Slide states are absolute, not deltas. The command palette's `Jump to Slide...` (e.g. `9.2.1` for scene 9, slide 2, step 1) depends on this.
 
@@ -181,7 +192,7 @@ Frontmatter: `title` (required), `subtitle`, `accent`, `bg`, `bgDark`, `text`, `
 
 ### Markdown-block components
 
-Authored inline inside a content slide. Each is one reveal step.
+Authored inline inside a content slide. Multiple blocks in the same slide render together as one step unless separated by `+++`.
 
 #### `heading`
 

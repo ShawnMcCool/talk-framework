@@ -24,8 +24,11 @@ Second slide body.
   nested keys (used for `colors:`).
 - `---` on its own line separates slides. Inside a fenced code block it is
   ignored.
-- Each top-level block (heading, bullet list, paragraph, quote, code fence,
-  directive) is one **reveal step**. Step N shows blocks 0..N.
+- A slide is one **reveal step** by default — every block shows at once.
+  `+++` on its own line splits the slide into additional steps; step `N`
+  reveals the blocks between the `N`th and `N+1`th `+++`. Leading, trailing,
+  and consecutive `+++`s are elided. `+++` inside a fenced code block is
+  literal text, not a separator.
 
 ## Frontmatter keys
 
