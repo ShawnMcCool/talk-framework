@@ -1,0 +1,10 @@
+title = "{{TALK_NAME}}"
+author = ""
+framework_version = "0.1"
+
+[palette]
+# Override framework default palette tokens here.
+# Any token from the framework's default palette can be overridden.
+# Examples:
+# accent = "#a3d9ff"
+# bg     = "#0a0a10"
