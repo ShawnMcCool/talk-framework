@@ -2,19 +2,68 @@ import { createEngine } from './engine/engine.js';
 import { createPalette } from './commands/palette.js';
 import { compileMarkdownScene } from './authoring/markdown-scene.js';
 import { validateScenes } from './authoring/scene-validation.js';
+import { createErrorPlaceholderScene } from './authoring/scene-placeholder.js';
 
-import placeholderMd from './scenes/placeholder/scene.md?raw';
+import { config, scenes as manifestScenes, issues, error } from 'virtual:content-manifest';
 
 import { applyColorVars } from './shared/colors.js';
 import { sessionState } from './shared/session-state.js';
 import { createDebugOverlay } from './debug/overlay.js';
 import { createNavOverlay } from './debug/nav-overlay.js';
 
-const placeholderScene = compileMarkdownScene(placeholderMd);
+let SCENE_SOURCES = buildSceneSources();
 
-const SCENE_SOURCES = [
-  { scene: placeholderScene, path: 'src/scenes/placeholder/scene.md', act: null },
-];
+function buildSceneSources() {
+  if (error) {
+    return [{
+      scene: createErrorPlaceholderScene({
+        folder: 'talk.toml',
+        index: null,
+        reason: error,
+      }),
+      path: null,
+      folder: 'talk.toml',
+    }];
+  }
+
+  if (issues.length > 0) {
+    console.warn('[content] structural issues in content folder:');
+    for (const issue of issues) {
+      console.warn(`  [${issue.severity}] ${issue.message}`);
+    }
+  }
+
+  return manifestScenes.map(s => {
+    try {
+      if (s.kind === 'md') {
+        return {
+          scene: compileMarkdownScene(s.source),
+          path: `/content/${s.folder}/scene.md`,
+          folder: s.folder,
+        };
+      }
+      const mod = s.source;
+      const sceneExport = mod.default || Object.values(mod).find(v => v && v.init && v.destroy);
+      if (!sceneExport) throw new Error('scene.js has no exported scene module');
+      return {
+        scene: sceneExport,
+        path: `/content/${s.folder}/scene.js`,
+        folder: s.folder,
+      };
+    } catch (err) {
+      console.warn(`[content] scene ${s.folder} failed to load:`, err.message);
+      return {
+        scene: createErrorPlaceholderScene({
+          folder: s.folder,
+          index: s.index,
+          reason: err.message,
+        }),
+        path: `/content/${s.folder}`,
+        folder: s.folder,
+      };
+    }
+  });
+}
 
 const stage = document.getElementById('stage');
 applyColorVars(document.documentElement);
