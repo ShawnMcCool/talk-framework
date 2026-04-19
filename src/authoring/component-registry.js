@@ -1,6 +1,7 @@
 import { component as contentSlide } from '../components/content-slide/component.js';
 import { component as sectionSlide } from '../components/section-slide/component.js';
 import { component as threeScene } from '../components/three-scene/component.js';
+import { component as svgScene } from '../components/svg-scene/component.js';
 
 const VALID_KINDS = new Set(['scene-type', 'markdown-block', 'js-factory']);
 
@@ -72,3 +73,4 @@ export const registry = createRegistry();
 registry.register(contentSlide);
 registry.register(sectionSlide);
 registry.register(threeScene);
+registry.register(svgScene);

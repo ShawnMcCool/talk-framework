@@ -86,3 +86,9 @@ test('three-scene validator accepts a complete module', () => {
   }, { file: 'x.js' });
   assert.deepEqual(diags, []);
 });
+
+test('bootstrap: svg-scene is registered', () => {
+  const c = registry.getByName('svg-scene');
+  assert.ok(c);
+  assert.equal(c.kind, 'js-factory');
+});
