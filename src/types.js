@@ -52,7 +52,7 @@
  */
 
 // =============================================================================
-// createThreeScene — src/three-scenes/scene-factory.js
+// createThreeScene — src/components/three-scene/scene-factory.js
 // =============================================================================
 
 /**

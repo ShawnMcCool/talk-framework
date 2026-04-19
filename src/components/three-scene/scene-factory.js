@@ -1,7 +1,7 @@
 import * as THREE from 'three';
-import { createThreeRenderer } from '../rendering/three-scene.js';
-import { createTrackedTimeline } from '../animation/tracked-timeline.js';
-import { colors as defaultColors } from '../shared/colors.js';
+import { createThreeRenderer } from '../../rendering/three-scene.js';
+import { createTrackedTimeline } from '../../animation/tracked-timeline.js';
+import { colors as defaultColors } from '../../shared/colors.js';
 
 /**
  * Factory that wraps the Three.js scene boilerplate:
@@ -17,8 +17,8 @@ import { colors as defaultColors } from '../shared/colors.js';
  * See `src/types.js` for the full shape of every context argument.
  *
  * @template Objects
- * @param {import('../types.js').ThreeSceneConfig<Objects>} config
- * @returns {import('../types.js').SceneModule}
+ * @param {import('../../types.js').ThreeSceneConfig<Objects>} config
+ * @returns {import('../../types.js').SceneModule}
  */
 export function createThreeScene(config) {
   const {

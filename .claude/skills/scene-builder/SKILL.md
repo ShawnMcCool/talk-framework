@@ -161,7 +161,7 @@ export const myScene = createSvgScene({
 For 3D content. The factory owns renderer creation/destruction, resize handling, animation cancellation, and the on-demand render loop.
 
 ```js
-import { createThreeScene } from '../../three-scenes/scene-factory.js';
+import { createThreeScene } from '../../components/three-scene/scene-factory.js';
 import { colors } from '../../shared/colors.js';
 import * as THREE from 'three';
 

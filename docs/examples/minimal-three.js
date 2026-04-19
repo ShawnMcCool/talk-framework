@@ -10,7 +10,7 @@
 // This example exists as a reference; it is NOT registered in the deck.
 
 import * as THREE from 'three';
-import { createThreeScene } from '../../src/three-scenes/scene-factory.js';
+import { createThreeScene } from '../../src/components/three-scene/scene-factory.js';
 import { colors } from '../../src/shared/colors.js';
 
 /** @type {import('../../src/types.js').SceneModule} */
