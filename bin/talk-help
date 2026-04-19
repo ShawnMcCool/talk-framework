@@ -1,0 +1,150 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SUBCOMMAND="${1:-}"
+
+if [ -z "$SUBCOMMAND" ]; then
+  cat <<'EOF'
+talk — beam-talk presentation framework
+
+USAGE
+  talk <command> [options]
+
+CREATING AND NAVIGATING
+  new <name>              scaffold a new presentation at ./<name>/
+  list                    list the scenes of the current presentation
+  version                 print the installed framework version
+
+STRUCTURAL EDITS (all support --dry-run)
+  add <slug> [--after N | --first]    add a new scene
+  remove <N>                          delete scene N
+  rename <N> <new-slug>               change a scene's slug (number preserved)
+  move <N> <where> [<M>]              reorder; where = before | after | first | last
+
+RUNNING
+  serve [path]            run the dev server against a talk (default: .)
+  lint  [path]            check a talk for structural problems (default: .)
+
+DEVELOPMENT (inside the framework repo only)
+  test                    run framework tests
+
+Run 'talk <command> --help' for command-specific help.
+EOF
+  exit 0
+fi
+
+case "$SUBCOMMAND" in
+  new)
+    cat <<'EOF'
+talk new <name>
+
+Scaffold a new presentation folder at ./<name>/ containing talk.toml and
+one starter scene. The target folder must not already exist, unless --force.
+
+OPTIONS
+  --force        allow creating inside an existing non-empty folder
+  --dry-run      print what would be created; make no filesystem changes
+
+EXAMPLE
+  talk new my-elixir-talk
+EOF
+    ;;
+  add)
+    cat <<'EOF'
+talk add <slug> [--after N | --first]
+
+Add a new empty scene to the current presentation. Default is to append.
+
+OPTIONS
+  --after N      insert after scene N (1-based)
+  --first        insert as scene 01
+  --dry-run      print what would change; make no filesystem changes
+
+EXAMPLE
+  talk add conclusion
+  talk add intro --after 1
+EOF
+    ;;
+  remove|rm)
+    cat <<'EOF'
+talk remove <N>
+
+Delete scene N. Later scenes are renumbered to close the gap.
+
+OPTIONS
+  --dry-run      print what would change; make no filesystem changes
+EOF
+    ;;
+  rename)
+    cat <<'EOF'
+talk rename <N> <new-slug>
+
+Change scene N's slug. The number is preserved.
+
+OPTIONS
+  --dry-run      print what would change; make no filesystem changes
+EOF
+    ;;
+  move)
+    cat <<'EOF'
+talk move <N> <where> [<M>]
+
+Reorder scenes.
+
+  where = before | after | first | last
+  N     = the scene to move
+  M     = the target scene (required for before/after)
+
+OPTIONS
+  --dry-run      print what would change; make no filesystem changes
+
+EXAMPLES
+  talk move 3 after 6
+  talk move 7 first
+EOF
+    ;;
+  serve)
+    cat <<'EOF'
+talk serve [path]
+
+Run the live-reloading dev server against a presentation. Defaults to the
+current directory; if `path` is given, resolves to the talk.toml at or
+above that path.
+
+The server binds to http://localhost:3000.
+EOF
+    ;;
+  lint)
+    cat <<'EOF'
+talk lint [path]
+
+Validate the structure of a presentation. Exits 0 on success, 1 on error.
+EOF
+    ;;
+  list)
+    cat <<'EOF'
+talk list
+
+Print the scenes of the current presentation, one per line.
+EOF
+    ;;
+  version)
+    cat <<'EOF'
+talk version
+
+Print the installed framework version.
+EOF
+    ;;
+  test)
+    cat <<'EOF'
+talk test
+
+Run the framework's own tests. Only works when run from inside the
+framework repo.
+EOF
+    ;;
+  *)
+    echo "No help available for '$SUBCOMMAND'. Run 'talk help' for the command list." >&2
+    exit 1
+    ;;
+esac

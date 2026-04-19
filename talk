@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+# Entry point for the beam-talk framework.
+# Resolves the framework repo from its own location, finds the current
+# talk folder if applicable, and dispatches to bin/talk-<subcommand>.
+
+set -euo pipefail
+
+FRAMEWORK_ROOT="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
+export FRAMEWORK_ROOT
+
+find_talk_root() {
+  local dir="${1:-$PWD}"
+  dir="$(cd "$dir" && pwd)"
+  while :; do
+    if [ -f "$dir/talk.toml" ]; then
+      echo "$dir"
+      return 0
+    fi
+    if [ "$dir" = "/" ]; then
+      return 1
+    fi
+    dir="$(dirname "$dir")"
+  done
+}
+
+# Default to help when no subcommand.
+SUB="${1:-help}"
+shift || true
+
+case "$SUB" in
+  -h|--help|help)
+    exec "$FRAMEWORK_ROOT/bin/talk-help" "$@"
+    ;;
+  -V|--version|version)
+    exec "$FRAMEWORK_ROOT/bin/talk-version" "$@"
+    ;;
+  new|add|remove|rename|move|list|serve|lint|test)
+    DISPATCH="$FRAMEWORK_ROOT/bin/talk-$SUB"
+    if [ ! -x "$DISPATCH" ]; then
+      echo "talk: internal error — bin/talk-$SUB is missing or not executable" >&2
+      exit 2
+    fi
+    exec "$DISPATCH" "$@"
+    ;;
+  *)
+    echo "talk: unknown command '$SUB'. Run 'talk help' for usage." >&2
+    exit 2
+    ;;
+esac
