@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+find_talk_root() {
+  local dir="${1:-$PWD}"
+  # Resolve to absolute path if it exists, otherwise try it as-is
+  if [ -d "$dir" ]; then
+    dir="$(cd "$dir" && pwd)"
+  fi
+  while :; do
+    if [ -f "$dir/talk.toml" ]; then
+      echo "$dir"
+      return 0
+    fi
+    if [ "$dir" = "/" ]; then
+      return 1
+    fi
+    dir="$(dirname "$dir")"
+  done
+}
+
+START="${1:-$PWD}"
+ROOT="$(find_talk_root "$START")" || {
+  echo "talk serve: no talk.toml found at or above '$START'" >&2
+  exit 1
+}
+
+echo "talk serve: $ROOT"
+echo "            http://localhost:3000"
+
+export CONTENT_DIR="$ROOT"
+cd "$FRAMEWORK_ROOT"
+exec docker compose up --build
