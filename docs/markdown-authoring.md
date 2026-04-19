@@ -69,6 +69,77 @@ Notes:
 - Raw HTML inside a paragraph is passed through verbatim — useful for
   colored `<span>`s via `{{tokenName}}` interpolation.
 
+## Box diagrams
+
+Embed a box-and-arrow diagram with a fenced code block using the info-string
+`box-diagram` — the same editor-friendly pattern as Mermaid, Graphviz, and Kroki.
+
+````markdown
+```box-diagram
+…
+```
+````
+
+One block = one diagram. When a slide needs two diagrams stacked, write two adjacent
+blocks; the framework inserts the horizontal rule between them automatically.
+
+### Block body syntax
+
+The body is declare-then-connect:
+
+```
+box <short-id> [<"display label">]  [role=<role>]  [subtitle="…"]
+…
+<src-id>  --  <arrow-label>  -->  <dst-id>
+```
+
+**Box declarations:**
+
+- **Short ID** is always required. It is the default display label. A quoted string after
+  the ID overrides the display without changing the reference: one bareword = both ID and
+  display; bareword + quoted string = ID + override.
+- **`role`** is one of `external` (default, neutral border), `accent` (cyan), `warm`
+  (amber). Reuse roles across the deck to teach color-role mapping.
+- **`subtitle="…"`** is optional, named (not positional), and renders as a muted second
+  line under the box label.
+
+**Arrow (flow) lines:**
+
+- Shape: `<src-id>  --  <label>  -->  <dst-id>`
+- Arrow label is everything between ` -- ` and ` --> `, trimmed. No quoting needed.
+  The literal string `-->` is forbidden inside a label.
+- Roles, labels, and IDs are all case-sensitive.
+
+**Section header:**
+
+- `section: "TITLE"` on its own line sets the small-caps header above the diagram.
+  Omit it when the slide has only one diagram.
+
+**Fan-out / fan-in:** use multiple flow lines referencing the same node ID.
+
+**Bidirectional relationships:** write two flow lines (one in each direction). There
+is no double-arrow glyph.
+
+### Example
+
+````markdown
+---
+title: Three boxes
+---
+
+# Three boxes, one table.
+
+```box-diagram
+section: THE SYSTEM
+box client                              subtitle="browser / app"
+box api         "My Blah API"           role=accent
+box database                            role=warm
+
+client -- POST /purchase --> api
+api    -- SQL             --> database
+```
+````
+
 ## Color token interpolation
 
 `{{tokenName}}` is replaced at compile time with
