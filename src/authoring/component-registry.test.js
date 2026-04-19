@@ -58,3 +58,10 @@ test('bootstrap: content-slide is registered', () => {
   assert.equal(c.kind, 'scene-type');
   assert.equal(registry.getByFrontmatterType('content'), c);
 });
+
+test('bootstrap: section-slide is registered', () => {
+  const c = registry.getByName('section-slide');
+  assert.ok(c);
+  assert.equal(c.kind, 'scene-type');
+  assert.equal(registry.getByFrontmatterType('section'), c);
+});
