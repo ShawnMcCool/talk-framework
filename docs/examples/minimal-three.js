@@ -1,13 +1,10 @@
 // Minimal Three.js scene — one rotating cube, one slide, two steps.
 //
-// To try it: copy this file to src/scenes/XX-minimal-three/scene.js, then
-// register it in src/main.js:
+// To try it: copy this file into a content folder as
+// `NN-minimal-three/scene.js`. The content-loader auto-discovers it; no
+// manual registration needed.
 //
-//   import { minimalThreeScene } from './scenes/XX-minimal-three/scene.js';
-//   ...
-//   { scene: minimalThreeScene, path: 'src/scenes/XX-minimal-three/scene.js' },
-//
-// This example exists as a reference; it is NOT registered in the deck.
+// This example is a reference only; it is not registered in any deck.
 
 import * as THREE from 'three';
 import { create3DScene } from '../../src/components/3d-scene/scene-factory.js';

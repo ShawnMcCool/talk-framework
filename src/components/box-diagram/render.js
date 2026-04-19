@@ -1,12 +1,6 @@
 // src/components/box-diagram/render.js
 import { colors as defaultColors } from '../../shared/colors.js';
 
-const ROLE_COLORS = {
-  external: 'border',  // neutral
-  accent:   'accent',  // cyan
-  warm:     'accentWarm', // amber
-};
-
 /**
  * Render a parsed box-diagram into a DOM node.
  *
@@ -72,7 +66,7 @@ function buildBox(node, c) {
   const accent =
     node.role === 'accent' ? (c.accent || '#6cb4d9') :
     node.role === 'warm'   ? (c.accentWarm || '#e4b36a') :
-                             (c.border || '#888');
+                             (c.textMuted || '#99aacc');
 
   const box = document.createElement('div');
   box.style.cssText = `
@@ -107,12 +101,12 @@ function buildArrow(arrow, c) {
 
   const line = document.createElement('div');
   line.style.cssText = `
-    width: 100%; height: 2px; background: ${c.border || '#888'}; position: relative;
+    width: 100%; height: 2px; background: ${c.textMuted || '#99aacc'}; position: relative;
   `;
   const head = document.createElement('span');
   head.style.cssText = `
     position: absolute; right: -2px; top: -5px;
-    border-left: 10px solid ${c.border || '#888'};
+    border-left: 10px solid ${c.textMuted || '#99aacc'};
     border-top: 6px solid transparent; border-bottom: 6px solid transparent;
   `;
   line.appendChild(head);

@@ -76,6 +76,9 @@ export function mountErrorBanner(root) {
       currentDiags = diags || [];
       render();
     },
+    dispose() {
+      if (el.parentNode) el.parentNode.removeChild(el);
+    },
   };
 }
 

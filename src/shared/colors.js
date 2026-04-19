@@ -24,8 +24,8 @@ export const colors = {
   purple: '#aa77ff',
 };
 
-export function applyColorVars(el) {
-  for (const [key, value] of Object.entries(colors)) {
+export function applyColorVars(el, palette = colors) {
+  for (const [key, value] of Object.entries(palette)) {
     el.style.setProperty(`--color-${key}`, value);
   }
 }

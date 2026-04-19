@@ -265,3 +265,45 @@ function interpolate(source, map) {
     return Object.prototype.hasOwnProperty.call(map, key) ? String(map[key]) : m;
   });
 }
+
+/**
+ * Given a parsed markdown scene and a deck-level palette, produce the
+ * dispatch record a factory consumes: kind, title, and factory arguments.
+ *
+ * Merge order:
+ *   defaultColors  <  [palette] from talk.toml  <  per-scene frontmatter
+ *
+ * For `content` scenes, palette keys become the base of `options.colors`,
+ * then per-scene `colors:` wins. For `section` scenes, palette supplies
+ * defaults for `accent`/`bg`/`bgDark`/`text` when frontmatter omits them.
+ *
+ * @param {import('../types.js').ParsedMarkdownScene} parsed
+ * @param {Record<string, string>} [palette]
+ * @returns {{ kind: 'content'|'section', title: string, factoryArgs: object }}
+ */
+export function resolveSceneOptions(parsed, palette = {}) {
+  if (parsed.type === 'section') {
+    const { colors: _ignored, ...rest } = parsed.options;
+    return {
+      kind: 'section',
+      title: parsed.title,
+      factoryArgs: {
+        accent: palette.accent,
+        bg: palette.bg,
+        bgDark: palette.bgDark,
+        text: palette.text,
+        ...rest,
+      },
+    };
+  }
+  if (parsed.type === 'content') {
+    const frontmatterColors = parsed.options.colors || {};
+    const mergedColors = { ...palette, ...frontmatterColors };
+    return {
+      kind: 'content',
+      title: parsed.title,
+      factoryArgs: { ...parsed.options, colors: mergedColors },
+    };
+  }
+  throw new Error(`markdown scene: unknown type "${parsed.type}"`);
+}

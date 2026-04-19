@@ -8,63 +8,108 @@ This file is the handoff for continuing work in a fresh session. `CLAUDE.md` is 
 
 A reusable presentation framework. The framework lives in `src/`; presentations are free-standing content folders anywhere on disk, marked by a `talk.toml` at their root. Shipped as a `talk` CLI on PATH that dispatches into Docker. Three.js + vanilla JS + Vite under the hood.
 
-Sub-projects A (content-folder foundation) and B (component registry + content-aware linter + dev-mode edge banner) are complete — see `CHANGELOG.md` for the full summary. 242 tests pass.
+Sub-projects A (content-folder foundation) and B (component registry + content-aware linter + dev-mode edge banner) are complete — see `CHANGELOG.md` for the full summary. Sub-project C is decomposed below; C1 (palette wiring) has shipped and C2–C4 are queued behind individual brainstorm cycles. 241 tests pass.
 
 ---
 
 ## 2. Open sub-projects
 
-Ordered by recommended build order. Each should go through its own brainstorm → spec → plan → execute cycle.
+Each requires its own brainstorm → spec → plan → execute cycle.
 
-### 2.1 Sub-project C — authoring surface (markdown bridges + new components)
+### 2.1 Sub-project C2 — title-animation markdown bridge
 
-**Status:** open. Depends on B.
+**Status:** design needed. Depends on C1 (shipped).
 
-Extend markdown-authored scenes beyond content + section slides:
+Let authors write `scene.md` files that invoke a title-animation variant instead of hand-rolling a JS scene:
 
-- Add `type: title-animation` with a `variant:` field (typewriter / drop / zoom-punch / spin-lock / extrude / reverse-explode).
-- For Three.js and SVG scenes: decide whether to support a narrow declarative subset (e.g. `type: 3d-scene` with `preset: box-diagram`) or keep them JS-only indefinitely.
-- Wire `[palette]` from `talk.toml` through to the runtime (the schema already accepts it; no code consumes it yet).
+```markdown
+---
+title: Why BEAM?
+type: title-animation
+variant: typewriter
+---
+```
 
-**From B's deferred scope:**
+Open design questions:
 
-- **Entity cards** — box-diagram extensions for entity/type rendering (beyond simple box nodes).
-- **Cardinality arrows** — FK-style arrow annotations (e.g. `1..n`, `0..1`) on box-diagram flow lines.
-- **Chapter chrome** — deck-level chapter titles / slide-number footer that span multiple scenes.
+- Which frontmatter keys does the markdown bridge expose? Just `variant:`, or also per-animation options (camera, shake, timing)?
+- How are the six existing variants (typewriter, drop, zoom-punch, spin-lock, extrude, reverse-explode) named — short strings? Fully qualified?
+- Can a variant be authored fully from markdown, or do complex animations stay JS-only?
+- Does this establish a general pattern for other JS-factory markdown bridges (see C5)?
 
-**Affected files:** `src/authoring/markdown-scene.lib.js`, each component factory gets a markdown adapter.
+**Affected files:** `src/authoring/markdown-scene.js`, `src/authoring/markdown-scene.lib.js`, `src/components/title-animation/component.js`, `docs/markdown-authoring.md`.
 
-### 2.2 Sub-project D — framework-version drift warning
+### 2.2 Sub-project C3 — box-diagram vocabulary expansion
 
-**Status:** open. Small; can slot in alongside C.
+**Status:** design needed.
 
-`talk.toml` already has a `framework_version` field (validated by `src/authoring/talk-config.lib.js`). When `talk lint` or `talk serve` runs, the CLI should warn if the content's declared `framework_version` doesn't match the installed `talk` version.
+Two related extensions to the existing `box-diagram` fenced-block DSL:
 
-Warning, not error — "results may vary" rather than a hard block. Migration tooling is **explicitly deferred** (aspirational only). Just the drift warning.
+- **Entity cards** — data-model rendering (typed fields, property lists), not just labeled boxes.
+- **Cardinality arrows** — FK-style annotations (`1..n`, `0..1`) on flow lines.
 
-**Affected files:** `bin/talk-version` as the source of truth for the current CLI version, new helper in `src/authoring/`, consumed by `bin/talk-lint.js` and `bin/talk-serve`.
+Both live in `src/components/box-diagram/parse.lib.js` + `render.js`, share the test harness, and need a coherent syntax that doesn't make the simple-box case harder to type.
+
+Open design questions:
+
+- Does entity-card syntax coexist with plain `box` inside the same diagram, or is it a separate fenced-block type?
+- Cardinality annotations — inline on the arrow line (`client --1..n--> order`), attached to the endpoints, or a separate declaration?
+- How does the linter communicate structural errors specific to these new forms?
+
+**Affected files:** `src/components/box-diagram/*.lib.js`, `src/components/box-diagram/render.js`, `docs/markdown-authoring.md`.
+
+### 2.3 Sub-project C4 — chapter chrome
+
+**Status:** design needed.
+
+Deck-level concept — not a per-scene component. Render a persistent chapter title / slide-number footer across runs of related scenes (e.g., scenes 5–9 all tagged "BEAM internals").
+
+Open design questions:
+
+- Where does chapter metadata live? In `talk.toml`? Each scene's frontmatter? A dedicated `00-chapter/` sentinel?
+- Does the chrome render in the engine's outer frame, as a per-scene HTML overlay, or as a new `ChapterLayer` concept?
+- Does chapter membership affect navigation (e.g., "jump to next chapter")?
+
+**Affected files:** `src/engine/`, likely new module. Possibly new CLI subcommand for scaffolding.
+
+### 2.4 Sub-project C5 — 3D / SVG declarative subset (open decision)
+
+**Status:** decision pending, no implementation until the decision is made.
+
+Question: is a declarative markdown bridge for Three.js / SVG scenes worth building (e.g., `type: 3d-scene` with `preset: box-diagram`), or should those stay JS-only indefinitely?
+
+Defer until C2 (title-animation bridge) ships. The value of this depends on how many authors reach for preset-ish Three.js scenes in practice — something we'll know better after C2.
+
+### 2.5 Sub-project D — framework-version drift warning
+
+**Status:** design needed; small scope.
+
+`talk.toml` already has a `framework_version` field (validated by `src/authoring/talk-config.lib.js`). When `talk lint` or `talk serve` runs, the CLI should warn (not error) if the content's declared `framework_version` doesn't match the installed `talk` version. Migration tooling is explicitly deferred.
+
+Open design questions:
+
+- What's the source of truth for the current CLI version? (`bin/talk-version`, `package.json`, a generated constant?)
+- How is the comparison scoped — exact match, semver compatibility, major-version gate?
+- Where does the warning render — stderr, the diagnostics stream, the error banner?
+
+**Affected files:** `bin/talk-version`, new helper in `src/authoring/`, consumed by `bin/talk-lint.js` and `bin/talk-serve`.
 
 ---
 
 ## 3. Deferred polish
 
-Items surfaced by reviews during B that don't block any sub-project. Tackle as mood strikes.
+Shippable items surfaced by reviews. Most were tackled alongside sub-project C1 — the rest need more thought.
 
-- **`mountErrorBanner` has no `dispose()`** — latent stacking risk if the banner is ever hoisted into `setup()` or if HMR re-evaluates main.js's top-level state.
-- **`c.border` in box-diagram render falls to `#888` always** — `defaultColors` has no `border` key. Either add one to `src/shared/colors.js` or swap the lookup to `c.textMuted`.
-- **`ROLE_COLORS` constant in `src/components/box-diagram/render.js` is unused** — plan-prescribed scaffolding for future non-linear layouts. Delete in a cleanup commit.
-- **`blockStartLine: 1` hardcoded in talk-lint's built-in branch** — latent debt: swap to `block.line || 1` once any Phase-4 built-in block gains a `validate`.
-- **Full-reload wipes the last-good cache** — `content-loader-plugin.js` still sends `ws.send({ type: 'full-reload' })` alongside the `talk:diagnostics` emission. The "edge banner on last-good render" experience only partially works until this is replaced with virtual-module invalidation + `import.meta.hot.accept`.
-- **Linter + Vite plugin duplicate block-walking logic** — consolidation target; extract a shared `walkSceneDiagnostics` helper.
+- **Full-reload wipes the last-good cache** — `content-loader-plugin.js` still sends `ws.send({ type: 'full-reload' })` alongside the `talk:diagnostics` emission. The "edge banner on last-good render" experience only partially works until this is replaced with virtual-module invalidation + `import.meta.hot.accept`. Needs HMR-semantics design before implementation.
+- **`sceneType` dead binding in `bin/talk-lint.js`** — `registry.getByFrontmatterType(parsed.type) || registry.getByName('content-slide')` is assigned but never read. Either wire it into a new scene-type-level validate hook or delete it.
 
 ---
 
 ## 4. Minor cleanups
 
-- **`docs/architecture/*.md` and `docs/markdown-authoring.md`** — audit for stale `src/scenes/` path references or talk-specific tokens.
-- **`src/shared/colors.js`** — framework default palette. Decide whether content folders should override via `[palette]` in `talk.toml` (C handles this).
-- **Browser test harness** — today's 242 tests cover pure libs and CLI integration. End-to-end (markdown → rendered DOM parity) is manual. Worth building if rendering regressions start sneaking in.
-- **npm packaging** — make the framework installable as a real package. Not needed for local-first use; nice-to-have for distribution.
+- **Remaining architecture docs** (`docs/architecture/*.md` other than `scenes.md`, `docs/markdown-authoring.md`) — audit for stale `SCENE_SOURCES` / `src/scenes/` references and talk-specific tokens.
+- **Browser test harness** — today's 241 tests cover pure libs and CLI integration. End-to-end (markdown → rendered DOM parity) is manual. Worth building if rendering regressions start sneaking in. Needs design.
+- **npm packaging** — make the framework installable as a real package. Not needed for local-first use; nice-to-have for distribution. Needs design (naming, layout, deps, release workflow).
 
 ---
 
@@ -72,8 +117,8 @@ Items surfaced by reviews during B that don't block any sub-project. Tackle as m
 
 1. Read `CLAUDE.md` top to bottom.
 2. Read this file top to bottom.
-3. Run `talk test` (from the framework repo) — confirm 242 tests pass before editing anything.
-4. Pick a sub-project from §2. Default: C.
+3. Run `talk test` (from the framework repo) — confirm 241 tests pass before editing anything.
+4. Pick a sub-project from §2. Default: C2.
 5. For each sub-project, walk through the full cycle:
    - **Brainstorm** (`superpowers:brainstorming`) — define author experience + decisions before mechanism.
    - **Spec** → `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md`.
@@ -91,6 +136,7 @@ Items surfaced by reviews during B that don't block any sub-project. Tackle as m
 - `docs/architecture/` — per-layer design notes.
 - `talk` + `bin/talk-*` — the CLI.
 - `src/authoring/component-registry.js` — single source of truth for all registered components.
+- `src/authoring/scene-diagnostics.lib.js` — shared block-walker consumed by the CLI linter and the Vite plugin.
 - `src/authoring/content-loader-plugin.js` — Vite plugin exposing `virtual:content-manifest` and the `talk:diagnostics` HMR channel.
 - `src/authoring/scene-placeholder.js` — runtime error card (first-render-fails fallback).
 - `src/authoring/*.lib.js` — pure libs consumed by every subcommand.
@@ -111,11 +157,3 @@ Items surfaced by reviews during B that don't block any sub-project. Tackle as m
 - **On-demand rendering for Three.js scenes** — call `renderer.markDirty()` after mutating objects; never assume a render loop.
 - **Never hardcode hex colors** — import from `src/shared/colors.js`.
 - **Small, focused commits. Never `--no-verify`. Never force-push.**
-
----
-
-## 8. Decisions still open
-
-- **Palette sourcing at runtime** — framework default only, or content folder can override via `[palette]` in `talk.toml`? Schema already accepts it; just not wired through. Good candidate for C.
-- **Declarative subset for Three.js / SVG scenes** — is a `preset:`-based markdown bridge worth building, or should those stay JS-only? Depends on how many Three.js scenes a typical content folder actually has.
-- **npm packaging** — make `talk-framework` installable as a real package, or keep the symlinked-script distribution model? Symlink works fine for single-author use; packaging matters if you want content repos to install the framework elsewhere.

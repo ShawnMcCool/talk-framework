@@ -1,25 +1,28 @@
 # Scenes layer
 
-**Path:** `src/scenes/`
+**Path:** content folders are free-standing — any directory containing a
+`talk.toml`, anywhere on disk. The framework never ships scene content.
 
 ## Purpose
 
-The deck's content. One subdirectory per scene, registered in order in
-`src/main.js`. Each scene is either:
+A scene is one module (one directory) inside a content folder. Each scene is
+either:
 
 - **Markdown-authored** — `scene.md` compiled via `compileMarkdownScene`.
 - **Hand-rolled** — `scene.js` exporting a module that satisfies
   `SceneModule` (usually built via `createContentSlide`,
-  `createSectionSlide`, or `create3DScene`).
+  `createSectionSlide`, `createTitleScene`, `create3DScene`, or
+  `createSvgScene`).
 
-Pick one, not both.
+Pick one, not both — structural lint flags the ambiguity.
 
 ## Naming
 
-- Directory: `NN-slug`, where `NN` is a two-digit order prefix. The prefix
-  is only a sort key humans read; the actual deck order comes from the
-  `SCENE_SOURCES` array in `main.js`.
-- Exported scene (when `.js`): `camelCaseScene`, e.g. `hotTakesScene`.
+- Directory: `NN-slug`, where `NN` is a two-digit order prefix and `slug` is
+  kebab-case. The prefix drives deck order at runtime.
+- Exported scene (when `.js`): `camelCaseScene`, e.g. `hotTakesScene`. The
+  runtime picks the scene via the module's `default` export, falling back
+  to the first export whose shape looks like a scene.
 
 ## Terminology
 
@@ -44,25 +47,25 @@ produce the same visual state regardless of whether you got there by
 animating through 0..n or jumping directly. Store absolute state, not
 deltas.
 
-## Registering a scene
+## Registration
 
-Today this is manual:
+Scenes are discovered automatically. The Vite `content-loader-plugin`
+(`src/authoring/content-loader-plugin.js`) walks the mounted content folder
+at build time, discovers every `NN-slug/` directory containing a `scene.md`
+or `scene.js`, and exposes the resulting manifest via the
+`virtual:content-manifest` module. `src/main.js` imports that virtual module
+and compiles each source on load.
 
-1. Add the directory + file under `src/scenes/`.
-2. In `src/main.js`, import the export (or the raw markdown with `?raw`
-   and pass through `compileMarkdownScene`).
-3. Add an entry to `SCENE_SOURCES` — order in this array is the talk's
-   slide order. Each entry is `{ scene, path }` (the path is surfaced by
-   the debug overlay and the `o` shortcut).
-
-An auto-registration variant using `import.meta.glob` is a natural next
-step; not implemented yet.
+No hand-maintained registry. Authors add or remove scenes by editing the
+filesystem (or via `talk add` / `talk remove` / `talk move`); the manifest
+rebuilds on the next dev-server request.
 
 ## Common pitfalls
 
-- **Order drift.** The `NN-` directory prefix doesn't drive ordering —
-  `SCENE_SOURCES` does. Keep them in sync by hand.
-- **Both `scene.md` and `scene.js`.** Only one will be registered (whichever
-  `main.js` imports). The other is dead code.
-- **Forgetting to register.** Scene file exists, but doesn't appear in the
-  deck. Validation runs only on registered scenes, so there's no warning.
+- **Both `scene.md` and `scene.js`.** Flagged as a structural issue by
+  `talk lint` and by the content-loader at startup. Pick one.
+- **Prefix collisions.** Two `03-…` folders produce a deterministic-but-
+  arbitrary ordering. `talk lint` reports this as a warning.
+- **Non-scene subdirectories in the content folder.** Ignored — only
+  directories matching `NN-slug/` with a `scene.md` or `scene.js` are
+  picked up.

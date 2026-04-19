@@ -9,7 +9,7 @@ import { subscribeDiagnostics } from './authoring/hmr-diagnostics.js';
 
 import { config, scenes as manifestScenes, issues, error } from 'virtual:content-manifest';
 
-import { applyColorVars } from './shared/colors.js';
+import { applyColorVars, colors as defaultColors } from './shared/colors.js';
 import { sessionState } from './shared/session-state.js';
 import { createDebugOverlay } from './debug/overlay.js';
 import { createNavOverlay } from './debug/nav-overlay.js';
@@ -56,7 +56,7 @@ function buildSceneSources() {
       let entry;
       if (s.kind === 'md') {
         entry = {
-          scene: compileMarkdownScene(s.source),
+          scene: compileMarkdownScene(s.source, { palette: config?.palette }),
           path: `/content/${s.folder}/scene.md`,
           folder: s.folder,
         };
@@ -91,7 +91,7 @@ function buildSceneSources() {
 }
 
 const stage = document.getElementById('stage');
-applyColorVars(document.documentElement);
+applyColorVars(document.documentElement, { ...defaultColors, ...(config?.palette || {}) });
 
 let engine = null;
 let palette = null;

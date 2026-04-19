@@ -4,6 +4,7 @@ import {
   parseFrontmatter,
   parseSlideBody,
   parseMarkdownScene,
+  resolveSceneOptions,
 } from './markdown-scene.lib.js';
 
 describe('parseFrontmatter', () => {
@@ -293,6 +294,49 @@ accent: "#abc"
     assert.equal(parsed.options.title, undefined);
     assert.equal(parsed.options.type, undefined);
     assert.equal(parsed.options.accent, '#abc');
+  });
+});
+
+describe('resolveSceneOptions (palette merge)', () => {
+  it('content: palette supplies colors.* base, frontmatter colors win', () => {
+    const parsed = parseMarkdownScene(`---\ntitle: X\ncolors:\n  accent: "#frontm"\n---\n`);
+    const out = resolveSceneOptions(parsed, { accent: '#pal', bg: '#palbg' });
+    assert.equal(out.kind, 'content');
+    assert.equal(out.factoryArgs.colors.accent, '#frontm'); // frontmatter wins
+    assert.equal(out.factoryArgs.colors.bg, '#palbg');      // palette fills the gap
+  });
+
+  it('content: empty palette yields frontmatter-only colors', () => {
+    const parsed = parseMarkdownScene(`---\ntitle: X\ncolors:\n  accent: "#f"\n---\n`);
+    const out = resolveSceneOptions(parsed);
+    assert.deepEqual(out.factoryArgs.colors, { accent: '#f' });
+  });
+
+  it('content: no frontmatter colors, palette only', () => {
+    const parsed = parseMarkdownScene(`---\ntitle: X\n---\n`);
+    const out = resolveSceneOptions(parsed, { accent: '#p' });
+    assert.deepEqual(out.factoryArgs.colors, { accent: '#p' });
+  });
+
+  it('section: palette supplies accent/bg/bgDark/text defaults; frontmatter wins', () => {
+    const parsed = parseMarkdownScene(`---\ntitle: X\ntype: section\naccent: "#fm"\n---\n`);
+    const out = resolveSceneOptions(parsed, { accent: '#pal', bg: '#palbg', text: '#paltxt' });
+    assert.equal(out.kind, 'section');
+    assert.equal(out.factoryArgs.accent, '#fm');     // frontmatter wins
+    assert.equal(out.factoryArgs.bg, '#palbg');      // palette default
+    assert.equal(out.factoryArgs.text, '#paltxt');   // palette default
+  });
+
+  it('section: palette keys absent stay undefined (factory default kicks in)', () => {
+    const parsed = parseMarkdownScene(`---\ntitle: X\ntype: section\n---\n`);
+    const out = resolveSceneOptions(parsed);
+    assert.equal(out.factoryArgs.accent, undefined);
+    assert.equal(out.factoryArgs.bg, undefined);
+  });
+
+  it('throws on unknown type', () => {
+    const parsed = { type: 'bogus', title: 'T', options: {}, slides: [] };
+    assert.throws(() => resolveSceneOptions(parsed), /unknown type/);
   });
 });
 

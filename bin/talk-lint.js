@@ -7,6 +7,7 @@ import { validateTalkConfig } from '../src/authoring/talk-config.lib.js';
 import { parseMarkdownScene } from '../src/authoring/markdown-scene.lib.js';
 import { registry } from '../src/authoring/component-registry.js';
 import { formatDiagnostics } from '../src/authoring/diagnostic-printer.lib.js';
+import { walkSceneDiagnostics } from '../src/authoring/scene-diagnostics.lib.js';
 
 function findTalkRoot(start) {
   let dir = path.resolve(start);
@@ -88,43 +89,9 @@ for (const scene of scenes) {
 
   const sceneType = registry.getByFrontmatterType(parsed.type) || registry.getByName('content-slide');
 
-  // Per-block validation: walk each slide's steps and blocks, dispatch to
-  // registered components. A slide is Array<Array<Block>> — outer = reveal
-  // steps, inner = blocks shown together.
-  for (const slide of parsed.slides) {
-    for (const step of slide) {
-      for (const block of step) {
-        // Custom markdown-block via fenced code info-string.
-        if (block.type === 'code' && block.language) {
-          const custom = registry.getByInfoString(block.language);
-          if (custom && custom.validate) {
-            const data = custom.parse ? custom.parse(block.code, {
-              file: `${scene.folder}/scene.md`,
-              blockStartLine: block.line || 1,
-            }) : block.code;
-            const diags = custom.validate(data, {
-              file: `${scene.folder}/scene.md`,
-              blockStartLine: block.line || 1,
-            });
-            for (const d of diags) {
-              allDiags.push(d);
-              if (d.severity === 'error') errorCount++; else warnCount++;
-            }
-          }
-          continue;
-        }
-
-        // Built-in markdown-block — typically trivially-valid; call validate if present.
-        const builtin = registry.getByBlockType(block.type);
-        if (builtin && builtin.validate) {
-          const diags = builtin.validate(block, { file: `${scene.folder}/scene.md`, blockStartLine: 1 });
-          for (const d of diags) {
-            allDiags.push(d);
-            if (d.severity === 'error') errorCount++; else warnCount++;
-          }
-        }
-      }
-    }
+  for (const d of walkSceneDiagnostics(parsed, { file: `${scene.folder}/scene.md`, registry })) {
+    allDiags.push(d);
+    if (d.severity === 'error') errorCount++; else warnCount++;
   }
 }
 

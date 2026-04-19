@@ -42,6 +42,14 @@ test('clicking banner expands it and preserves state across updates', () => {
   assert.match(el.textContent, /second/);
 });
 
+test('dispose() removes the banner from the DOM', () => {
+  setupDom();
+  const banner = mountErrorBanner(document.body);
+  assert.ok(document.querySelector('.talk-error-banner'));
+  banner.dispose();
+  assert.equal(document.querySelector('.talk-error-banner'), null);
+});
+
 test('banner dismisses when diagnostics clear', async () => {
   setupDom();
   const banner = mountErrorBanner(document.body);

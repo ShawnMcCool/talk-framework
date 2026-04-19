@@ -17,6 +17,7 @@ import { parseToml } from './toml.lib.js';
 import { validateTalkConfig } from './talk-config.lib.js';
 import { parseMarkdownScene } from './markdown-scene.lib.js';
 import { registry } from './component-registry.js';
+import { walkSceneDiagnostics } from './scene-diagnostics.lib.js';
 
 const VIRTUAL_ID = 'virtual:content-manifest';
 const RESOLVED_ID = '\0' + VIRTUAL_ID;
@@ -161,40 +162,7 @@ function collectSceneDiagnostics(sceneId, sceneMdPath) {
       }];
     }
 
-    const diagnostics = [];
-
-    for (const slide of parsed.slides) {
-      for (const step of slide) {
-        for (const block of step) {
-          if (block.type === 'code' && block.language) {
-            const custom = registry.getByInfoString(block.language);
-            if (custom && custom.validate) {
-              const data = custom.parse ? custom.parse(block.code, {
-                file: `${sceneId}/scene.md`,
-                blockStartLine: block.line || 1,
-              }) : block.code;
-              const diags = custom.validate(data, {
-                file: `${sceneId}/scene.md`,
-                blockStartLine: block.line || 1,
-              });
-              for (const d of diags) diagnostics.push(d);
-            }
-            continue;
-          }
-
-          const builtin = registry.getByBlockType(block.type);
-          if (builtin && builtin.validate) {
-            const diags = builtin.validate(block, {
-              file: `${sceneId}/scene.md`,
-              blockStartLine: 1,
-            });
-            for (const d of diags) diagnostics.push(d);
-          }
-        }
-      }
-    }
-
-    return diagnostics;
+    return walkSceneDiagnostics(parsed, { file: `${sceneId}/scene.md`, registry });
   } catch (err) {
     return [{
       severity: 'error',
