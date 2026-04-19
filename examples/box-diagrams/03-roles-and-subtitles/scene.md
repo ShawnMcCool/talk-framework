@@ -12,6 +12,6 @@ box client "Browser app"    subtitle="React + service worker"
 box api    "Edge API"       role=accent  subtitle="Cloudflare Worker"
 box store  "Durable Object" role=warm    subtitle="per-tenant state"
 
-client -- fetch       --> api
+client -- fetch   --> api
 api    -- persist --> store
 ```
