@@ -5,6 +5,7 @@ import { component as svgScene } from '../components/svg-scene/component.js';
 import { component as titleAnimation } from '../components/title-animation/component.js';
 import { component as heading } from '../components/heading/component.js';
 import { component as paragraph } from '../components/paragraph/component.js';
+import { component as bulletList } from '../components/bullet-list/component.js';
 
 const VALID_KINDS = new Set(['scene-type', 'markdown-block', 'js-factory']);
 
@@ -80,3 +81,4 @@ registry.register(svgScene);
 registry.register(titleAnimation);
 registry.register(heading);
 registry.register(paragraph);
+registry.register(bulletList);
