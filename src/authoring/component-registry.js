@@ -1,3 +1,5 @@
+import { component as contentSlide } from '../components/content-slide/component.js';
+
 const VALID_KINDS = new Set(['scene-type', 'markdown-block', 'js-factory']);
 
 /**
@@ -64,3 +66,5 @@ export function createRegistry() {
  * bottom of this file so the imports are the single inventory.
  */
 export const registry = createRegistry();
+
+registry.register(contentSlide);

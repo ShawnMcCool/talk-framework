@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createRegistry, validateDescriptor } from './component-registry.js';
+import { createRegistry, validateDescriptor, registry } from './component-registry.js';
 
 test('registry stores and retrieves by name', () => {
   const desc = { name: 'heading', kind: 'markdown-block', matcher: { blockType: 'heading' } };
@@ -50,4 +50,11 @@ test('validateDescriptor rejects unknown kind', () => {
 test('validateDescriptor accepts a valid descriptor', () => {
   const errs = validateDescriptor({ name: 'x', kind: 'markdown-block', matcher: { blockType: 'x' } });
   assert.deepEqual(errs, []);
+});
+
+test('bootstrap: content-slide is registered', () => {
+  const c = registry.getByName('content-slide');
+  assert.ok(c);
+  assert.equal(c.kind, 'scene-type');
+  assert.equal(registry.getByFrontmatterType('content'), c);
 });
