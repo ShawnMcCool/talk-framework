@@ -253,7 +253,7 @@ Matches the project's `*.lib.js` + `*.lib.test.js` discipline.
 
 **Pure units** (unit-tested headlessly):
 
-- **Scene discovery.** Given a directory listing, return a sorted array of scene descriptors. Input: list of directory names. Output: `[{ index, slug, path, kind: 'md'|'js' }, ...]` or a list of structural errors.
+- **Scene discovery.** Given a directory listing, return a sorted array of scene descriptors. Input: list of directory names. Output: `[{ index, slug, folder, kind: 'md'|'js' }, ...]` alongside a list of structural issues.
 - **Rename planning.** Given current scenes and a structural command (move/remove/add), return the list of `{from, to}` rename pairs. Input: current state + command. Output: rename plan. Dry-run prints the same plan the real command executes.
 - **TOML parsing and validation.** Given a config string, return the parsed config or a typed error.
 
