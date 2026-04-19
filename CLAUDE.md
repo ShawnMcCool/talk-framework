@@ -63,15 +63,14 @@ Everything under `src/` is framework code. No presentation content lives in the 
 
 ### Parameterized content folder
 
-The content folder is chosen at run time, not hard-coded. The dev server and linter take the folder as an argument:
+The content folder is chosen at run time, not hard-coded. Every `talk` command operates on the content folder identified by the nearest `talk.toml` (walking up from the current directory), and content folders live anywhere on disk:
 
 ```bash
-./dev content/beam-talk
-./dev content/some-other-presentation
-./lint content/beam-talk
+talk serve ~/src/my-elixir-talk
+talk lint  ~/src/my-elixir-talk
 ```
 
-Multiple presentations can coexist in the repo side-by-side. The framework has no knowledge of any specific presentation.
+Multiple presentations can coexist side-by-side; the framework has no knowledge of any specific presentation.
 
 ### Reusable components
 

@@ -73,7 +73,7 @@ Snapshot of what's actually in the repo right now. Verify with `git log` and `ls
 ### 3.1 Layout
 
 ```
-/home/shawn/src/beam-talk/
+/home/shawn/src/talk/
 ├── CLAUDE.md              # Describes paradigm (see §2) + current-state gap list
 ├── dev                    # Wraps `docker compose up --build`
 ├── dev-check              # Probes every JS module for Vite import errors
