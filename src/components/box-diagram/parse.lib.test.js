@@ -52,3 +52,67 @@ test('blank lines and indentation are tolerated', () => {
   const r = parseBoxDiagram('\n\nbox   a\n\n   box b  \n', ctx());
   assert.equal(r.nodes.length, 2);
 });
+
+test('parses a simple flow line', () => {
+  const r = parseBoxDiagram('box client\nbox api\nclient -- POST --> api', ctx());
+  assert.deepEqual(r.arrows, [{ from: 'client', to: 'api', label: 'POST', line: 3 }]);
+});
+
+test('arrow label preserves spaces and slashes', () => {
+  const r = parseBoxDiagram('box a\nbox b\na -- POST /purchase --> b', ctx());
+  assert.equal(r.arrows[0].label, 'POST /purchase');
+});
+
+test('rejects arrow without terminator', () => {
+  const r = parseBoxDiagram('box a\nbox b\na -- bad -> b', ctx());
+  assert.ok(r.errors.length > 0);
+});
+
+test('parses section header', () => {
+  const r = parseBoxDiagram('section: THE SYSTEM\nbox a', ctx());
+  assert.equal(r.section, 'THE SYSTEM');
+});
+
+test('parses quoted section header', () => {
+  const r = parseBoxDiagram('section: "THE SYSTEM"\nbox a', ctx());
+  assert.equal(r.section, 'THE SYSTEM');
+});
+
+test('parses a full spec example', () => {
+  const src = [
+    'section: THE SYSTEM',
+    'box client                              subtitle="browser / app"',
+    'box api         "My Blah API"           role=accent',
+    'box database                            role=warm',
+    '',
+    'client -- POST /purchase --> api',
+    'api    -- SQL             --> database',
+  ].join('\n');
+  const r = parseBoxDiagram(src, ctx());
+  assert.equal(r.section, 'THE SYSTEM');
+  assert.equal(r.nodes.length, 3);
+  assert.equal(r.nodes[0].subtitle, 'browser / app');
+  assert.equal(r.nodes[1].label, 'My Blah API');
+  assert.equal(r.nodes[1].role, 'accent');
+  assert.equal(r.nodes[2].role, 'warm');
+  assert.equal(r.arrows.length, 2);
+  assert.equal(r.arrows[0].label, 'POST /purchase');
+  assert.deepEqual(r.errors, []);
+});
+
+test('reports an error for gibberish lines', () => {
+  const r = parseBoxDiagram('this is not valid', ctx());
+  assert.ok(r.errors.length > 0);
+});
+
+test('fan-out: multiple arrows from same source', () => {
+  const src = [
+    'box a',
+    'box b',
+    'box c',
+    'a -- x --> b',
+    'a -- y --> c',
+  ].join('\n');
+  const r = parseBoxDiagram(src, ctx());
+  assert.equal(r.arrows.length, 2);
+});
