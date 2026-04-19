@@ -129,3 +129,9 @@ test('bootstrap: code-fence is registered', () => {
   assert.ok(c);
   assert.equal(registry.getByBlockType('code'), c);
 });
+
+test('bootstrap: spacer is registered', () => {
+  const c = registry.getByName('spacer');
+  assert.ok(c);
+  assert.equal(registry.getByBlockType('spacer'), c);
+});
