@@ -117,3 +117,9 @@ test('bootstrap: bullet-list is registered', () => {
   assert.ok(c);
   assert.equal(registry.getByBlockType('bullets'), c);
 });
+
+test('bootstrap: quote is registered', () => {
+  const c = registry.getByName('quote');
+  assert.ok(c);
+  assert.equal(registry.getByBlockType('quote'), c);
+});

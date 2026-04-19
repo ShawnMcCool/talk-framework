@@ -6,6 +6,7 @@ import { component as titleAnimation } from '../components/title-animation/compo
 import { component as heading } from '../components/heading/component.js';
 import { component as paragraph } from '../components/paragraph/component.js';
 import { component as bulletList } from '../components/bullet-list/component.js';
+import { component as quote } from '../components/quote/component.js';
 
 const VALID_KINDS = new Set(['scene-type', 'markdown-block', 'js-factory']);
 
@@ -82,3 +83,4 @@ registry.register(titleAnimation);
 registry.register(heading);
 registry.register(paragraph);
 registry.register(bulletList);
+registry.register(quote);
