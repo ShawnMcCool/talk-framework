@@ -1,5 +1,12 @@
 node_modules/
 dist/
-.superpowers/
 tmp/
 package-lock.json
+
+# AI / tool-specific local state
+.claude/
+.serena/
+.superpowers/
+
+# Private planning artifacts (specs ship; plans are internal chatter)
+docs/superpowers/plans/

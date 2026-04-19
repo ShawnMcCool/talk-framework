@@ -1,8 +1,31 @@
 {
-  "name": "talk",
+  "name": "talk-framework",
   "version": "0.1.0",
-  "private": true,
+  "description": "A reusable presentation framework. Author decks as free-standing folders of markdown (and optional JS) scenes; the framework renders them via Three.js + Vite.",
+  "keywords": [
+    "presentation",
+    "slides",
+    "deck",
+    "framework",
+    "markdown",
+    "three.js",
+    "vite",
+    "dsl"
+  ],
+  "license": "MIT",
+  "author": "Shawn McCool",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ShawnMcCool/talk-framework.git"
+  },
+  "homepage": "https://github.com/ShawnMcCool/talk-framework#readme",
+  "bugs": {
+    "url": "https://github.com/ShawnMcCool/talk-framework/issues"
+  },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "node -e \"if(!process.env.CONTENT_DIR){console.error('CONTENT_DIR is not set — use talk serve <path> instead of npm run dev');process.exit(1)}\" && vite",
     "test": "node --test",

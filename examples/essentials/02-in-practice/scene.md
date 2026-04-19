@@ -19,7 +19,5 @@ function fetchUser(id) {
 }
 ```
 
-:spacer lg:
-
 > The best code reviews feel like a pair of eyes reading alongside you, not a gate checking whether you deserve to merge.
 > — internal team retro, 2024
