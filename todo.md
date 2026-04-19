@@ -56,7 +56,7 @@ The runtime side replaces the current minimal error-placeholder card (`src/autho
 **Affected files.**
 - `bin/talk-lint.js` → rewritten around the registry
 - `src/authoring/scene-placeholder.js` → replaced by richer overlay module
-- Each component dir (`src/content-slides/`, etc.) gains a `validator.js`
+- Each component dir (`src/components/content-slide/`, etc.) gains a `validator.js`
 - New `src/authoring/component-registry.js` as the single source of truth
 
 ### 3.2 Sub-project C — authoring surface (markdown bridges + new components)

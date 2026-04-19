@@ -97,7 +97,7 @@ Framework layers under `src/`. Content never lives here.
 | Animation | `src/animation/` | Tween/timeline system for slide transitions |
 | Commands | `src/commands/` | Fuzzy-search command palette (Escape key) |
 | Authoring | `src/authoring/` | Markdown scene compiler, scene validation, editor middleware |
-| Content slides | `src/content-slides/` | `createContentSlide` — bullets/headings/quotes/code |
+| Content slides | `src/components/content-slide/` | `createContentSlide` — bullets/headings/quotes/code |
 | Section slides | `src/section-slides/` | `createSectionSlide` — large section breaks |
 | Title animations | `src/title-animations/` | `createTitleScene` + animation variants |
 | Three scenes | `src/three-scenes/` | `createThreeScene` factory — boilerplate for 3D scenes |
@@ -142,7 +142,7 @@ The framework exposes these components. Authors should reach for the highest-lev
 
 Author these by dropping a `scene.md` in the content folder. See `docs/markdown-authoring.md` for the full block and frontmatter reference.
 
-- **Content slide** (`src/content-slides/`) — headings, bullets, quotes, code fences, paragraphs, muted text, spacers. The default `type` in frontmatter.
+- **Content slide** (`src/components/content-slide/`) — headings, bullets, quotes, code fences, paragraphs, muted text, spacers. The default `type` in frontmatter.
 - **Section slide** (`src/section-slides/`) — large titled section break. `type: section` in frontmatter.
 
 Minimal example:

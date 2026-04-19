@@ -153,7 +153,7 @@
  */
 
 // =============================================================================
-// Content slides — src/content-slides/scene-factory.js
+// Content slides — src/components/content-slide/scene-factory.js
 // =============================================================================
 
 /**
