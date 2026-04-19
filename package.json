@@ -1,10 +1,10 @@
 {
   "name": "beam-talk",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "node -e \"if(!process.env.CONTENT_DIR){console.error('CONTENT_DIR is not set — use talk serve <path> instead of npm run dev');process.exit(1)}\" && vite",
     "test": "node --test",
     "build": "vite build"
   },
