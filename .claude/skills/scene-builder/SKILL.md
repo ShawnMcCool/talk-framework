@@ -205,7 +205,7 @@ Reference: `src/scenes/07-beam-vm/scene.js`.
 
 ## 3d. Title animation scenes (`createTitleScene`)
 
-For reusable title entrance animations. See `src/title-animations/` for the factory and `src/scenes/_attic/*/` for examples (drop, typewriter, extrude, zoom-punch, reverse-explode, spin-lock).
+For reusable title entrance animations. See `src/components/title-animation/` for the factory and `src/scenes/_attic/*/` for examples (drop, typewriter, extrude, zoom-punch, reverse-explode, spin-lock).
 
 ## 4. Determinism checklist
 
