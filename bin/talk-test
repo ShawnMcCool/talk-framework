@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# talk test runs the framework's own suite. It only runs when invoked from
+# inside the framework repo (where package.json is present alongside src/).
+if [ ! -f "$FRAMEWORK_ROOT/package.json" ] || [ ! -d "$FRAMEWORK_ROOT/src" ]; then
+  echo "talk test: this command only runs inside the framework repo" >&2
+  exit 1
+fi
+
+cd "$FRAMEWORK_ROOT"
+exec docker compose run --rm app npm test "$@"
