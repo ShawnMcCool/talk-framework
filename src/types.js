@@ -1,4 +1,4 @@
-// JSDoc typedefs for beam-talk's scene contract and factory configs.
+// JSDoc typedefs for talk's scene contract and factory configs.
 //
 // This file declares no runtime values — it exists purely so editors (VS Code,
 // JetBrains, any TS-server-aware LSP) and LLMs can resolve the shapes that

@@ -10,7 +10,7 @@ export function validateScenes(sceneDefs) {
   const reports = validateScenesLib(sceneDefs);
   if (reports.length === 0) return;
 
-  console.group('[beam-talk] scene validation warnings');
+  console.group('[talk] scene validation warnings');
   for (const r of reports) {
     console.warn(`scene ${r.sceneIndex + 1} "${r.title}":`);
     for (const issue of r.issues) {

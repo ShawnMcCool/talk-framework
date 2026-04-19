@@ -3,7 +3,7 @@ title: Minimal Example
 type: content
 ---
 
-# Hello, beam-talk
+# Hello, talk
 
 - First bullet
 - Second bullet

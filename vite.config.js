@@ -2,7 +2,7 @@ import { openInEditorPlugin } from './src/authoring/dev-middleware.js';
 import { contentLoaderPlugin } from './src/authoring/content-loader-plugin.js';
 
 export default {
-  base: process.env.NODE_ENV === 'production' ? '/beam-talk/' : '/',
+  base: process.env.NODE_ENV === 'production' ? '/talk/' : '/',
   plugins: [
     contentLoaderPlugin({ contentRoot: '/content' }),
     openInEditorPlugin(),

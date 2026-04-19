@@ -5,7 +5,7 @@ description: Use when previewing, screenshotting, or visually iterating on prese
 
 # Presentation Preview
 
-Workflow skill for visual iteration on beam-talk scenes using Chrome DevTools MCP.
+Workflow skill for visual iteration on talk scenes using Chrome DevTools MCP.
 
 ## Prerequisites
 
@@ -18,7 +18,7 @@ The user should run ./dev in a separate terminal.
 ## Open the Presentation
 
 ```
-navigate_page → http://localhost:3000/beam-talk/
+navigate_page → http://localhost:3000/talk/
 ```
 
 If the page shows a blank screen or error, try `http://localhost:3000/` instead (dev server may not need the base path).
@@ -91,6 +91,6 @@ list_console_messages
 
 **HMR not updating:** If code changes don't appear, the HMR module replacement may have failed. Refresh the page:
 ```
-navigate_page → http://localhost:3000/beam-talk/
+navigate_page → http://localhost:3000/talk/
 ```
 Then navigate back to the scene.

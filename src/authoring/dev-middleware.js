@@ -7,7 +7,7 @@ import { resolve, relative, isAbsolute } from 'node:path';
 
 export function openInEditorPlugin() {
   return {
-    name: 'beam-talk-open-in-editor',
+    name: 'talk-open-in-editor',
     apply: 'serve',
     configureServer(server) {
       const root = server.config.root;

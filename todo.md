@@ -6,9 +6,9 @@ This file is the handoff for closing the gap between the project's **target para
 
 ## 1. What this project is
 
-`beam-talk` is being rebuilt as a **reusable presentation framework**. The framework is separate from any specific presentation. Presentations live in their own top-level content folders and are chosen at runtime.
+`talk` is a **reusable presentation framework**. The framework is separate from any specific presentation. Presentations live in their own top-level content folders and are chosen at runtime.
 
-The repository keeps the name `beam-talk` for historical reasons. The original content (a 45-minute technical talk on BEAM / Elixir architecture) has been archived to `archive/`. The repo now contains only the framework and a placeholder scene.
+The repository was originally named `beam-talk` — it started as a 45-minute technical talk on BEAM / Elixir architecture, now archived to `archive/`. The repo now contains only the framework and a placeholder scene.
 
 The framework is a single-page web app: Three.js + vanilla JS + Vite, dev-served out of Docker.
 
@@ -27,9 +27,8 @@ Everything under `src/` is framework code. No presentation content lives in the 
 The content folder is chosen at run time. It has a top-level, arbitrary name. The dev server and linter take the folder as an argument:
 
 ```bash
-./dev content/beam-talk
-./dev content/some-other-presentation
-./lint content/beam-talk
+talk serve ~/src/my-elixir-talk
+talk lint  ~/src/my-elixir-talk
 ```
 
 Multiple presentations can coexist in the repo side-by-side. The framework has no knowledge of any specific presentation.
@@ -262,7 +261,7 @@ each with its own spec and plan under `docs/superpowers/`:
 - **Content folder has its own palette** (`palette.js` or palette frontmatter) that overrides the framework default.
 - **Per-presentation config file** at the root of a content folder: `presentation.json` or similar. Title, theme, author, etc.
 - **Browser test harness** for markdown → render parity (today there's unit-level testing of libs but not end-to-end).
-- **Package the framework** so it can be consumed by a content folder in a separate repo (`npm install beam-talk`). Implies renaming the package.
+- **Package the framework** so it can be consumed by a content folder in a separate repo (`npm install talk`).
 
 ---
 

@@ -1,11 +1,11 @@
 ---
 name: scene-builder
-description: Use when creating, editing, scaffolding, or registering a presentation scene in beam-talk — triggers on "new scene", "add scene", "create scene", "build slide", "edit scene", "scene.md", "scene.js", "createThreeScene", "createSvgScene", "createContentSlide", "createSectionSlide", "createTitleScene", "compileMarkdownScene", "cornerLoop", "trackedPlayTimeline", "register scene", "SCENE_SOURCES", or working in src/scenes/.
+description: Use when creating, editing, scaffolding, or registering a presentation scene in talk — triggers on "new scene", "add scene", "create scene", "build slide", "edit scene", "scene.md", "scene.js", "createThreeScene", "createSvgScene", "createContentSlide", "createSectionSlide", "createTitleScene", "compileMarkdownScene", "cornerLoop", "trackedPlayTimeline", "register scene", "SCENE_SOURCES", or working in src/scenes/.
 ---
 
 # Scene Builder
 
-Rigid reference for creating and editing presentation scenes in beam-talk. Use the sections below as a checklist.
+Rigid reference for creating and editing presentation scenes in talk. Use the sections below as a checklist.
 
 ## Architecture recap
 

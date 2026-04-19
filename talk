@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Entry point for the beam-talk framework.
+# Entry point for the talk framework.
 # Resolves the framework repo from its own location, finds the current
 # talk folder if applicable, and dispatches to bin/talk-<subcommand>.
 

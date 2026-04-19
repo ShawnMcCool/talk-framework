@@ -23,7 +23,7 @@ export function contentLoaderPlugin(options = {}) {
   const contentRoot = options.contentRoot || '/content';
 
   return {
-    name: 'beam-talk:content-loader',
+    name: 'talk:content-loader',
 
     configureServer(server) {
       try {

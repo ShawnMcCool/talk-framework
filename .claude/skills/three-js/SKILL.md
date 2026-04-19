@@ -1,9 +1,9 @@
 ---
 name: three-js
-description: Use when working with Three.js code in beam-talk — creating 3D objects, materials, lighting, camera, animations, or debugging rendering issues. Triggers on Three.js, 3D, mesh, geometry, material, camera, lighting, tween, or renderer work in src/rendering/ or src/scenes/.
+description: Use when working with Three.js code in talk — creating 3D objects, materials, lighting, camera, animations, or debugging rendering issues. Triggers on Three.js, 3D, mesh, geometry, material, camera, lighting, tween, or renderer work in src/rendering/ or src/scenes/.
 ---
 
-# Three.js in beam-talk
+# Three.js in talk
 
 Reference for Three.js patterns specific to this project. All 3D scenes use a shared renderer setup with project-specific conventions.
 

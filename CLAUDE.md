@@ -1,4 +1,4 @@
-# beam-talk
+# talk
 
 A reusable presentation framework. The framework lives in `src/`; presentations live in their own top-level content folders and are chosen at runtime. Three.js + vanilla JS + Vite.
 

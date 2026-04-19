@@ -1,9 +1,9 @@
 /**
  * Tiny persistence helper for dev session state (current position + overlay
- * visibility). Keys are namespaced under `beam-talk:` in localStorage.
+ * visibility). Keys are namespaced under `talk:` in localStorage.
  * Silently swallows any errors (private browsing, quota, etc.).
  */
-const NS = 'beam-talk:';
+const NS = 'talk:';
 
 function safeGet(key) {
   try { return localStorage.getItem(NS + key); } catch { return null; }
