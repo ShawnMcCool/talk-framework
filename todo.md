@@ -23,7 +23,7 @@ Ordered by recommended build order. Each should go through its own brainstorm â†
 Extend markdown-authored scenes beyond content + section slides:
 
 - Add `type: title-animation` with a `variant:` field (typewriter / drop / zoom-punch / spin-lock / extrude / reverse-explode).
-- For Three.js and SVG scenes: decide whether to support a narrow declarative subset (e.g. `type: three-scene` with `preset: box-diagram`) or keep them JS-only indefinitely.
+- For Three.js and SVG scenes: decide whether to support a narrow declarative subset (e.g. `type: 3d-scene` with `preset: box-diagram`) or keep them JS-only indefinitely.
 - Wire `[palette]` from `talk.toml` through to the runtime (the schema already accepts it; no code consumes it yet).
 
 **From B's deferred scope:**

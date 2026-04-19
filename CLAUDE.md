@@ -100,7 +100,7 @@ Framework layers under `src/`. Content never lives here.
 | Content slides | `src/components/content-slide/` | `createContentSlide` — bullets/headings/quotes/code |
 | Section slides | `src/components/section-slide/` | `createSectionSlide` — large section breaks |
 | Title animations | `src/components/title-animation/` | `createTitleScene` + animation variants |
-| Three scenes | `src/components/three-scene/` | `createThreeScene` factory — boilerplate for 3D scenes |
+| Three scenes | `src/components/3d-scene/` | `create3DScene` factory — boilerplate for 3D scenes |
 | SVG scenes | `src/components/svg-scene/` | `createSvgScene` factory — boilerplate for SVG scenes |
 
 Shared utilities: `src/shared/colors.js` (palette constants + CSS vars).
@@ -149,7 +149,7 @@ Markdown scenes satisfy this contract via `compileMarkdownScene`; JS scenes typi
 | code-fence | `src/components/code-fence/` | markdown-block |
 | spacer | `src/components/spacer/` | markdown-block |
 | box-diagram | `src/components/box-diagram/` | markdown-block |
-| three-scene | `src/components/three-scene/` | js-factory |
+| 3d-scene | `src/components/3d-scene/` | js-factory |
 | svg-scene | `src/components/svg-scene/` | js-factory |
 | title-animation | `src/components/title-animation/` | js-factory |
 
@@ -188,16 +188,16 @@ client -- POST --> api
 
 For custom behavior, use a factory from the catalogue. The factory absorbs renderer / lifecycle / cancellation boilerplate.
 
-- **Three.js scene** (`src/components/three-scene/scene-factory.js`) — `createThreeScene({ title, slides, setup, onTick, resolveStep, animateStep })`
+- **Three.js scene** (`src/components/3d-scene/scene-factory.js`) — `create3DScene({ title, slides, setup, onTick, resolveStep, animateStep })`
 - **SVG scene** (`src/components/svg-scene/scene-factory.js`) — `createSvgScene(...)`
 - **Title animation** (`src/components/title-animation/`) — `createTitleScene` with animation variants (typewriter, drop, zoom-punch, spin-lock, extrude, reverse-explode)
 
 Minimal Three.js example:
 
 ```javascript
-import { createThreeScene } from '../../src/components/three-scene/scene-factory.js';
+import { create3DScene } from '../../src/components/3d-scene/scene-factory.js';
 
-export const myScene = createThreeScene({
+export const myScene = create3DScene({
   title: 'My 3D Scene',
   slides: [{ stepCount: 3 }],
   setup({ scene, camera }) { /* create objects, return handle */ },

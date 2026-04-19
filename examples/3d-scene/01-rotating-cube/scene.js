@@ -1,4 +1,4 @@
-// Rotating cube — a minimal Three.js scene built with `createThreeScene`.
+// Rotating cube — a minimal Three.js scene built with `create3DScene`.
 //
 // Step 0: cube is still, facing the camera.
 // Step 1: cube tilts onto a 45° corner.
@@ -11,10 +11,10 @@
 // dev-time authoring surface.
 
 import * as THREE from '/@fs/app/node_modules/three/build/three.module.js';
-import { createThreeScene } from '/@fs/app/src/components/three-scene/scene-factory.js';
+import { create3DScene } from '/@fs/app/src/components/3d-scene/scene-factory.js';
 import { colors } from '/@fs/app/src/shared/colors.js';
 
-export const rotatingCube = createThreeScene({
+export const rotatingCube = create3DScene({
   title: 'Rotating cube',
   slides: [{ stepCount: 3 }],
 

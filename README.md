@@ -65,7 +65,7 @@ A scene module exports the engine's contract:
 Scenes come in two flavours:
 
 - **`scene.md`** — markdown-authored. A pure function turns the source into a scene module by selecting a scene-type component (`content-slide` by default, `section-slide` for `type: section` frontmatter) and compiling the body into blocks.
-- **`scene.js`** — JS-authored. Use a factory from the components catalogue (`createThreeScene`, `createSvgScene`, `createTitleScene`) to absorb the renderer / lifecycle / cancellation boilerplate.
+- **`scene.js`** — JS-authored. Use a factory from the components catalogue (`create3DScene`, `createSvgScene`, `createTitleScene`) to absorb the renderer / lifecycle / cancellation boilerplate.
 
 Pick one or the other per folder — never both.
 
@@ -270,16 +270,16 @@ cache  -- fall through --> db
 
 ### JS factory components
 
-Imported in `scene.js`. Each factory absorbs the renderer / lifecycle / cancellation boilerplate so authors only write the interesting bits. See [`examples/three-scene/`](examples/three-scene/), [`examples/svg-scene/`](examples/svg-scene/), [`examples/title-animation/`](examples/title-animation/) for runnable references.
+Imported in `scene.js`. Each factory absorbs the renderer / lifecycle / cancellation boilerplate so authors only write the interesting bits. See [`examples/3d-scene/`](examples/3d-scene/), [`examples/svg-scene/`](examples/svg-scene/), [`examples/title-animation/`](examples/title-animation/) for runnable references.
 
-#### `three-scene`
+#### `3d-scene`
 
 Three.js scene with background colour, on-demand rendering, and auto-cancelled animations.
 
 ```js
-import { createThreeScene } from '/@fs/app/src/components/three-scene/scene-factory.js';
+import { create3DScene } from '/@fs/app/src/components/3d-scene/scene-factory.js';
 
-export const myScene = createThreeScene({
+export const myScene = create3DScene({
   title: 'My 3D scene',
   slides: [{ stepCount: 3 }],
   setup({ scene, camera }) { /* build objects; return handle */ },

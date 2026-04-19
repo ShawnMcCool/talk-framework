@@ -39,7 +39,7 @@ animation, the engine calls `resolve()` on the current timeline, which
 immediately applies the final values and fires `done`, freeing the engine
 to start the next step.
 
-## The `createThreeScene` wrapper
+## The `create3DScene` wrapper
 
 `playTimeline` alone has no tracking. The Three scene factory wraps it
 (`trackedPlayTimeline`) so that each new `animateStep` cancels the previous

@@ -66,21 +66,21 @@ test('bootstrap: section-slide is registered', () => {
   assert.equal(registry.getByFrontmatterType('section'), c);
 });
 
-test('bootstrap: three-scene is registered', () => {
-  const c = registry.getByName('three-scene');
+test('bootstrap: 3d-scene is registered', () => {
+  const c = registry.getByName('3d-scene');
   assert.ok(c);
   assert.equal(c.kind, 'js-factory');
 });
 
-test('three-scene validator flags missing exports', () => {
-  const c = registry.getByName('three-scene');
+test('3d-scene validator flags missing exports', () => {
+  const c = registry.getByName('3d-scene');
   const diags = c.validate({}, { file: 'x.js' });
   assert.ok(diags.length >= 6);
   assert.ok(diags.every(d => d.severity === 'error'));
 });
 
-test('three-scene validator accepts a complete module', () => {
-  const c = registry.getByName('three-scene');
+test('3d-scene validator accepts a complete module', () => {
+  const c = registry.getByName('3d-scene');
   const diags = c.validate({
     title: 't', slides: [], init() {}, destroy() {}, resolveToSlide() {}, animateToSlide() {},
   }, { file: 'x.js' });

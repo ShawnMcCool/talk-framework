@@ -18,7 +18,7 @@ The dev server starts on http://localhost:3000. Use the arrow keys to step throu
 |------|-----------------|-----|
 | `essentials/` | content-slide, section-slide, heading, paragraph, bullet-list, quote, code-fence, spacer | `talk serve examples/essentials/` |
 | `box-diagrams/` | box-diagram (simple flow, section header, roles + subtitles) | `talk serve examples/box-diagrams/` |
-| `three-scene/` | three-scene (JS factory — rotating cube with step-driven state) | `talk serve examples/three-scene/` |
+| `3d-scene/` | 3d-scene (JS factory — rotating cube with step-driven state) | `talk serve examples/3d-scene/` |
 | `svg-scene/` | svg-scene (JS factory — memory-hierarchy bar chart drawn to scale) | `talk serve examples/svg-scene/` |
 | `title-animation/` | title-animation (JS factory — typewriter variant) | `talk serve examples/title-animation/` |
 
@@ -34,9 +34,9 @@ Expected: `lint: ok`.
 
 ## Notes on the JS scenes
 
-The `three-scene/`, `svg-scene/`, and `title-animation/` examples use a `/@fs/app/src/...` import prefix. This is Vite's dev-server escape hatch for importing files outside the content root: the framework sits at `/app` inside Docker; the content folder is mounted at `/content`. The `/@fs/` prefix lets a scene's JS code reach back into the framework for factories like `createThreeScene` and `createSvgScene`. It works during `talk serve` but not in a production bundle — which is the right scope for examples.
+The `3d-scene/`, `svg-scene/`, and `title-animation/` examples use a `/@fs/app/src/...` import prefix. This is Vite's dev-server escape hatch for importing files outside the content root: the framework sits at `/app` inside Docker; the content folder is mounted at `/content`. The `/@fs/` prefix lets a scene's JS code reach back into the framework for factories like `create3DScene` and `createSvgScene`. It works during `talk serve` but not in a production bundle — which is the right scope for examples.
 
-Sub-project C will add markdown bridges (`type: three-scene` with frontmatter parameters) so simple 3D / SVG / title scenes can be authored without writing JS. Until then, these examples show the JS-authored path directly.
+Sub-project C will add markdown bridges (`type: 3d-scene` with frontmatter parameters) so simple 3D / SVG / title scenes can be authored without writing JS. Until then, these examples show the JS-authored path directly.
 
 ## See also
 

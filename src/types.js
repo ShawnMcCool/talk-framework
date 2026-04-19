@@ -52,31 +52,31 @@
  */
 
 // =============================================================================
-// createThreeScene — src/components/three-scene/scene-factory.js
+// create3DScene — src/components/3d-scene/scene-factory.js
 // =============================================================================
 
 /**
- * Configuration for `createThreeScene`. The factory handles renderer
+ * Configuration for `create3DScene`. The factory handles renderer
  * lifecycle, background color, animation cancellation, and the optional tick
  * loop — user code supplies setup + the two state functions.
  *
  * @template Objects
- * @typedef {Object} ThreeSceneConfig
+ * @typedef {Object} Scene3DConfig
  * @property {string} title
  * @property {SlideDef[]} slides
  * @property {string | number} [background]
  *   Hex color (or THREE-compatible value) for `scene.background`. Defaults to
  *   `colors.bg`.
- * @property {(ctx: ThreeSetupContext) => Objects} setup
+ * @property {(ctx: Scene3DSetupContext) => Objects} setup
  *   Called once during `init`. Create meshes, lights, groups; return a handle
  *   that is passed to every subsequent callback.
  * @property {(objects: Objects, ctx: { markDirty: () => void }) => void | false} [onTick]
  *   Optional per-frame callback. If provided, a `requestAnimationFrame` loop
  *   is started automatically. Return `false` to stop the loop (rare).
- * @property {(objects: Objects, ctx: ThreeStepContext) => void} resolveStep
+ * @property {(objects: Objects, ctx: Scene3DStepContext) => void} resolveStep
  *   Instant (no-animation) state application for `(slideIndex, stepIndex)`.
  *   Must be deterministic — see the determinism guarantee on `SceneModule`.
- * @property {(objects: Objects, ctx: ThreeAnimateContext) => void} animateStep
+ * @property {(objects: Objects, ctx: Scene3DAnimateContext) => void} animateStep
  *   Animated transition. Use the injected `playTimeline` + `setTimeout` so
  *   cancellation is wired up automatically. Always call `done()` when
  *   finished (including when cancelled — `playTimeline.resolve()` calls your
@@ -87,7 +87,7 @@
  */
 
 /**
- * @typedef {Object} ThreeSetupContext
+ * @typedef {Object} Scene3DSetupContext
  * @property {import('three').Scene} scene
  * @property {import('three').OrthographicCamera} camera
  *   Default camera created by `createThreeRenderer`. Replace via
@@ -99,7 +99,7 @@
  */
 
 /**
- * @typedef {Object} ThreeStepContext
+ * @typedef {Object} Scene3DStepContext
  * @property {number} slideIndex
  * @property {number} stepIndex
  * @property {ThreeRendererHandle} renderer
@@ -107,12 +107,12 @@
  */
 
 /**
- * Extends ThreeStepContext with cancellation-aware animation primitives.
- * @typedef {ThreeStepContext & {
+ * Extends Scene3DStepContext with cancellation-aware animation primitives.
+ * @typedef {Scene3DStepContext & {
  *   playTimeline: (tweens: TweenDef[], apply: (values: Record<string, number>) => void, done: () => void) => TimelineHandle,
  *   setTimeout: (fn: () => void, ms: number) => number,
  *   done: () => void,
- * }} ThreeAnimateContext
+ * }} Scene3DAnimateContext
  */
 
 /**

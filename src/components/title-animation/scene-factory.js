@@ -1,6 +1,6 @@
 import { createThreeRenderer } from '../../rendering/three-scene.js';
 import { colors } from '../../shared/colors.js';
-import { disposeGroup } from '../three-scene/scene-helpers.js';
+import { disposeGroup } from '../3d-scene/scene-helpers.js';
 import { createFramingCamera, setupResize } from './camera.js';
 import { createIntro } from './intro.js';
 import { getTextBounds } from './text.js';

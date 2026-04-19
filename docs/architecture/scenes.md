@@ -10,7 +10,7 @@ The deck's content. One subdirectory per scene, registered in order in
 - **Markdown-authored** — `scene.md` compiled via `compileMarkdownScene`.
 - **Hand-rolled** — `scene.js` exporting a module that satisfies
   `SceneModule` (usually built via `createContentSlide`,
-  `createSectionSlide`, or `createThreeScene`).
+  `createSectionSlide`, or `create3DScene`).
 
 Pick one, not both.
 

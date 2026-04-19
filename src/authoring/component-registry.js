@@ -1,6 +1,6 @@
 import { component as contentSlide } from '../components/content-slide/component.js';
 import { component as sectionSlide } from '../components/section-slide/component.js';
-import { component as threeScene } from '../components/three-scene/component.js';
+import { component as scene3d } from '../components/3d-scene/component.js';
 import { component as svgScene } from '../components/svg-scene/component.js';
 import { component as titleAnimation } from '../components/title-animation/component.js';
 import { component as heading } from '../components/heading/component.js';
@@ -80,7 +80,7 @@ export const registry = createRegistry();
 
 registry.register(contentSlide);
 registry.register(sectionSlide);
-registry.register(threeScene);
+registry.register(scene3d);
 registry.register(svgScene);
 registry.register(titleAnimation);
 registry.register(heading);

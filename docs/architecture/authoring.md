@@ -97,7 +97,7 @@ Looked up by block type or info-string. Current components: `heading`, `paragrap
 
 **`js-factory`** — a JS helper that wraps renderer/lifecycle boilerplate. Scenes authored
 in JS call these directly; the registry entry exists primarily for tooling discovery.
-Current components: `three-scene`, `svg-scene`, `title-animation`.
+Current components: `3d-scene`, `svg-scene`, `title-animation`.
 
 ### Dispatch at runtime and lint-time
 

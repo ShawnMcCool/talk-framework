@@ -6,7 +6,7 @@ import { playTimeline as rawPlayTimeline } from './timeline.js';
  * in-flight timeline (snapping to final values + calling doneFn) and clears
  * every pending timeout.
  *
- * Use this in hand-rolled scenes. `createThreeScene` and `createSvgScene`
+ * Use this in hand-rolled scenes. `create3DScene` and `createSvgScene`
  * already own an instance internally.
  */
 export function createTrackedTimeline() {

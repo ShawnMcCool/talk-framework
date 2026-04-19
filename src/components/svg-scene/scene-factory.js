@@ -4,7 +4,7 @@ import { createTrackedTimeline } from '../../animation/tracked-timeline.js';
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
 /**
- * Factory for animated SVG+HTML scenes. Parallels `createThreeScene` but uses
+ * Factory for animated SVG+HTML scenes. Parallels `create3DScene` but uses
  * the HTML renderer as a container, mounts an <svg> root plus an HTML overlay
  * <div>, and auto-tracks animation cancellation.
  *

@@ -17,10 +17,10 @@ import { colors as defaultColors } from '../../shared/colors.js';
  * See `src/types.js` for the full shape of every context argument.
  *
  * @template Objects
- * @param {import('../../types.js').ThreeSceneConfig<Objects>} config
+ * @param {import('../../types.js').Scene3DConfig<Objects>} config
  * @returns {import('../../types.js').SceneModule}
  */
-export function createThreeScene(config) {
+export function create3DScene(config) {
   const {
     title,
     slides,
