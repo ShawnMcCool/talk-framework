@@ -19,7 +19,7 @@ The dev server starts on http://localhost:3000. Use the arrow keys to step throu
 | `essentials/` | content-slide, section-slide, heading, paragraph, bullet-list, quote, code-fence, spacer | `talk serve examples/essentials/` |
 | `box-diagrams/` | box-diagram (simple flow, section header, roles + subtitles) | `talk serve examples/box-diagrams/` |
 | `three-scene/` | three-scene (JS factory — rotating cube with step-driven state) | `talk serve examples/three-scene/` |
-| `svg-scene/` | svg-scene (JS factory — three stars + connecting line) | `talk serve examples/svg-scene/` |
+| `svg-scene/` | svg-scene (JS factory — memory-hierarchy bar chart drawn to scale) | `talk serve examples/svg-scene/` |
 | `title-animation/` | title-animation (JS factory — typewriter variant) | `talk serve examples/title-animation/` |
 
 ## Lint checks
