@@ -4,6 +4,12 @@ All notable changes to this project are recorded in this file. Version numbers f
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-04-19
+
+### Changed (BREAKING)
+- **Reveal-step semantics flipped.** A slide is now one reveal step by default — every block appears at once — instead of one step per block. Authors who want progressive reveal put `+++` on its own line where they want the break; leading, trailing, and consecutive `+++`s are elided; `+++` inside a fenced code block is literal text. This matches how authors think (write a slide → see a slide) and keeps the staged-reveal pattern available but explicit.
+- **Scene-contract data shape.** A slide is now `Array<Array<Block>>` — outer = reveal steps, inner = blocks shown together. The runtime (`content-slide`'s `renderSlide`), the linter's per-block dispatch (`bin/talk-lint.js`), and the Vite plugin's `collectSceneDiagnostics` all updated for the extra nesting level. Any external code that iterated `slide.map(block => …)` now needs a second loop.
+
 ## [0.2.0] — 2026-04-19
 
 ### Added
