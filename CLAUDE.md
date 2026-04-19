@@ -4,12 +4,29 @@ A reusable presentation framework. The framework lives in `src/`; presentations 
 
 ## Development
 
-All tooling runs inside Docker. Nothing installed on the host.
+All tooling runs through the unified `talk` CLI. Install by symlinking the repo's
+`talk` script into your PATH:
 
 ```bash
-./dev <content-dir>     # Run dev server against a specific content folder
-./lint <content-dir>    # Validate content parseability against the framework
-./test                  # Run framework tests
+ln -s "$PWD/talk" ~/.local/bin/talk
+```
+
+Author workflow:
+
+```bash
+talk new my-talk           # scaffold a new presentation in ./my-talk/
+cd my-talk
+talk serve                 # live-reloading dev server at http://localhost:3000
+talk lint                  # validate structure and talk.toml
+talk add intro             # add a scene
+talk move 3 after 6        # reorder; 5 folders rename atomically
+talk remove 4              # delete and renumber
+```
+
+Framework-repo-only commands:
+
+```bash
+talk test                  # run the framework's own test suite
 ```
 
 Scripts are extensionless executables with shebangs. Never add `.sh` suffixes.
@@ -209,14 +226,20 @@ The linter reports path + line errors on failure, zero on success. The dev serve
 
 ## Current state
 
-The sections above describe the target paradigm. These are the gaps between the paradigm and what is currently implemented. Closing them is tracked in `todo.md`.
+Sub-project A (content-folder foundation) is complete:
 
-- **Content folder is not yet parameterized.** Content lives at `src/scenes/` (only a `placeholder/` scene right now), and `./dev` does not accept a content-folder argument.
-- **Registration is manual.** Scenes are imported and listed in a `SCENE_SOURCES` array in `src/main.js`. There is no auto-discovery of a content folder.
-- **Markdown bridge is partial.** Markdown covers content slides and section slides only. Title animations, Three.js scenes, and SVG scenes still require JS entry points.
-- **Linter is shape-only.** `src/authoring/scene-validation.lib.js` validates the scene contract (title, slides, stepCount, required methods). It has no component-aware parseability checks.
-- **No `./lint` script.** `./dev-check` probes Vite's import graph but is not content-aware.
-- **Framework-specific content is archived** in `archive/` (the prior BEAM/Elixir talk). The framework itself carries no talk-specific content.
+- `talk` CLI on PATH dispatches to focused subcommand scripts.
+- Content folders are free-standing and marked by a `talk.toml` at their root.
+- Scenes live in numeric-prefixed directories (`01-welcome/`, `02-intro/`, …).
+- Structural edits (`add`, `remove`, `rename`, `move`) are atomic and support `--dry-run`.
+- The Vite content-loader plugin exposes the mounted content folder via `virtual:content-manifest`.
+- Bad scenes render as error-placeholder cards; the rest of the deck stays navigable.
+
+Still open (see `todo.md`):
+
+- **Sub-project B** — component-aware linter and in-browser error overlay.
+- **Sub-project C** — markdown bridges for Three.js / SVG / title-animation components.
+- **Sub-project D** — framework-version drift warning.
 
 ## See also
 
