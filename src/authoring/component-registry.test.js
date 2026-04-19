@@ -135,3 +135,10 @@ test('bootstrap: spacer is registered', () => {
   assert.ok(c);
   assert.equal(registry.getByBlockType('spacer'), c);
 });
+
+test('bootstrap: box-diagram is registered', () => {
+  const c = registry.getByName('box-diagram');
+  assert.ok(c);
+  assert.equal(c.kind, 'markdown-block');
+  assert.equal(registry.getByInfoString('box-diagram'), c);
+});

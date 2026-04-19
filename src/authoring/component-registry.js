@@ -9,6 +9,7 @@ import { component as bulletList } from '../components/bullet-list/component.js'
 import { component as quote } from '../components/quote/component.js';
 import { component as codeFence } from '../components/code-fence/component.js';
 import { component as spacer } from '../components/spacer/component.js';
+import { component as boxDiagram } from '../components/box-diagram/component.js';
 
 const VALID_KINDS = new Set(['scene-type', 'markdown-block', 'js-factory']);
 
@@ -88,3 +89,4 @@ registry.register(bulletList);
 registry.register(quote);
 registry.register(codeFence);
 registry.register(spacer);
+registry.register(boxDiagram);
