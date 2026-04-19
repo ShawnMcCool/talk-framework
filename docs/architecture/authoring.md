@@ -108,14 +108,16 @@ registry.getByInfoString(block.language)  // fenced code blocks
 registry.getByBlockType(block.type)        // everything else
 ```
 
-- **Lint-time:** `bin/talk-lint.js` walks every scene's blocks and calls these lookups to
-  find the component that validates each block. Diagnostics are aggregated and reported as
-  `file:line` errors.
+- **Lint-time:** `bin/talk-lint.js` walks every scene via the shared
+  `walkSceneDiagnostics` helper (`src/authoring/scene-diagnostics.lib.js`),
+  which dispatches each block to the registered component. Diagnostics
+  are aggregated and reported as `file:line` errors.
 - **Runtime:** `content-slide/scene-factory.js` calls the same lookups in its `renderBlock`
   function to dispatch rendering.
-- **HMR diagnostics:** the Vite plugin (`content-loader-plugin.js`) re-runs the lint
-  pipeline when a `scene.md` changes and emits `talk:diagnostics` events to the dev-mode
-  banner in the browser.
+- **HMR diagnostics:** the Vite plugin (`content-loader-plugin.js`) re-runs
+  `walkSceneDiagnostics` when a `scene.md` changes and emits
+  `talk:diagnostics` events to the dev-mode banner in the browser — so the
+  CLI and the in-browser banner are guaranteed to agree.
 
 ### How to add a new component
 
@@ -145,3 +147,14 @@ registry.getByBlockType(block.type)        // everything else
 - **HTML in markdown.** Passed through verbatim, which is great for
   custom color spans (`<span style="color:{{beam}}">…</span>`) but means
   an unclosed tag leaks into the rest of the slide.
+
+## Palette
+
+The colors map used for `{{token}}` interpolation and propagated as
+factory defaults is built from `src/shared/colors.js` merged with the
+`[palette]` table in `talk.toml` (if any). Per-scene frontmatter
+(`colors:` nested map, or top-level `accent`/`bg`/... on section scenes)
+still wins over the deck palette.
+
+The layering is done in `resolveSceneOptions` (pure lib) and plumbed
+through `compileMarkdownScene`.

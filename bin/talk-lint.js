@@ -87,8 +87,6 @@ for (const scene of scenes) {
     continue;
   }
 
-  const sceneType = registry.getByFrontmatterType(parsed.type) || registry.getByName('content-slide');
-
   for (const d of walkSceneDiagnostics(parsed, { file: `${scene.folder}/scene.md`, registry })) {
     allDiags.push(d);
     if (d.severity === 'error') errorCount++; else warnCount++;

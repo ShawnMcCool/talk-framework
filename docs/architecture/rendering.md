@@ -13,10 +13,10 @@ Thin renderers that mount into the stage `<div>` and hand back a surface
 | File | Surface | Used by |
 | --- | --- | --- |
 | `three-scene.js` | `THREE.WebGLRenderer` + orthographic camera + on-demand render loop | `src/components/3d-scene/scene-factory.js` |
-| `html-scene.js` | A positioned `<div>` you append to | `src/components/content-slide/`, `src/components/section-slide/` |
+| `html-scene.js` | A positioned `<div>` you append to | `src/components/content-slide/`, `src/components/section-slide/`, `src/components/svg-scene/` |
 
-An SVG renderer is planned but not yet present; CLAUDE.md mentions it as the
-third intended surface.
+SVG scenes reuse the HTML renderer and mount an `<svg>` element under its
+container — there is no dedicated SVG renderer in `src/rendering/`.
 
 ## Three renderer specifics
 
