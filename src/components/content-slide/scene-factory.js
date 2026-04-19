@@ -80,11 +80,31 @@ export function createContentSlide(title, slides, opts = {}) {
         margin: 0; font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
         font-size: 1.1rem; line-height: 1.7; color: ${c.text}; white-space: pre;
       }
-      .${id}-code .kw { color: ${c.purple}; }
-      .${id}-code .fn { color: ${c.beam}; }
-      .${id}-code .str { color: ${c.green}; }
-      .${id}-code .cm { color: ${c.textMuted}; }
-      .${id}-code .at { color: ${c.accentWarm}; }
+      .${id}-code pre code { background: transparent; padding: 0; }
+      .${id}-code .hljs-comment,
+      .${id}-code .hljs-quote       { color: ${c.textMuted}; font-style: italic; }
+      .${id}-code .hljs-keyword,
+      .${id}-code .hljs-selector-tag,
+      .${id}-code .hljs-literal     { color: ${c.purple}; }
+      .${id}-code .hljs-string,
+      .${id}-code .hljs-symbol,
+      .${id}-code .hljs-regexp      { color: ${c.green}; }
+      .${id}-code .hljs-number,
+      .${id}-code .hljs-meta        { color: ${c.accentWarm}; }
+      .${id}-code .hljs-title,
+      .${id}-code .hljs-title.function_,
+      .${id}-code .hljs-section     { color: ${c.beam}; }
+      .${id}-code .hljs-built_in,
+      .${id}-code .hljs-type,
+      .${id}-code .hljs-class,
+      .${id}-code .hljs-attr,
+      .${id}-code .hljs-attribute,
+      .${id}-code .hljs-variable    { color: ${c.accent}; }
+      .${id}-code .hljs-tag,
+      .${id}-code .hljs-name        { color: ${c.beam}; }
+      .${id}-code .hljs-params,
+      .${id}-code .hljs-operator,
+      .${id}-code .hljs-punctuation { color: ${c.text}; }
       .${id}-quote {
         border-left: 3px solid ${c.accent}; padding: 0.8rem 0 0.8rem 2rem;
         margin: 0 0 1.2rem 0;

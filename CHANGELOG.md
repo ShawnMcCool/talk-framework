@@ -4,6 +4,9 @@ All notable changes to this project are recorded in this file. Version numbers f
 
 ## [Unreleased]
 
+### Added
+- Syntax highlighting for fenced code blocks via `highlight.js` (core + 10 languages: bash, elixir, javascript, json, python, rust, sql, typescript, xml/html, yaml). Token colours map to the framework palette in `src/shared/colors.js` — no external theme CSS. Unknown languages fall through to plain `<pre><code>` as before.
+
 ## [0.1.0] — 2026-04-19
 
 Initial public release. Two sub-projects have landed:
