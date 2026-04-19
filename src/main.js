@@ -3,42 +3,17 @@ import { createPalette } from './commands/palette.js';
 import { compileMarkdownScene } from './authoring/markdown-scene.js';
 import { validateScenes } from './authoring/scene-validation.js';
 
-// --- Act 1 — The Cycle of Shame ---
-import { cycleScene } from './scenes/02-cycle/scene.js';
-import perspectivesMd from './scenes/03-perspectives/scene.md?raw';
-import forkMd from './scenes/04-fork/scene.md?raw';
-import { bridgeScene } from './scenes/05-bridge/scene.js';
-
-// --- Act 2+ — Legacy / WIP ---
-import { hotTakesScene } from './scenes/07-hot-takes/scene.js';
-import { deepDiveScene } from './scenes/08-deep-dive/scene.js';
-import { faultToleranceScene } from './scenes/11-fault-tolerance/scene.js';
-import { codeExampleScene } from './scenes/12-code-example/scene.js';
+import placeholderMd from './scenes/placeholder/scene.md?raw';
 
 import { applyColorVars } from './shared/colors.js';
 import { sessionState } from './shared/session-state.js';
 import { createDebugOverlay } from './debug/overlay.js';
 import { createNavOverlay } from './debug/nav-overlay.js';
 
-const perspectivesScene = compileMarkdownScene(perspectivesMd);
-const forkScene = compileMarkdownScene(forkMd);
+const placeholderScene = compileMarkdownScene(placeholderMd);
 
-// Each scene is paired with its source path so the dev HUD can surface it
-// and the "open in editor" shortcut knows what file to open.
-// Scenes are grouped by act — the `act` field is informational (no runtime
-// effect yet, but tooling can use it).
 const SCENE_SOURCES = [
-  // === Act 1 — The Cycle of Shame ===
-  { scene: cycleScene,           path: 'src/scenes/02-cycle/scene.js',           act: 1 },
-  { scene: perspectivesScene,    path: 'src/scenes/03-perspectives/scene.md',    act: 1 },
-  { scene: forkScene,            path: 'src/scenes/04-fork/scene.md',            act: 1 },
-  { scene: bridgeScene,          path: 'src/scenes/05-bridge/scene.js',          act: 1 },
-
-  // === Legacy / WIP (not yet assigned to an act) ===
-  { scene: hotTakesScene,        path: 'src/scenes/07-hot-takes/scene.js',       act: null },
-  { scene: codeExampleScene,     path: 'src/scenes/12-code-example/scene.js',    act: null },
-  { scene: deepDiveScene,        path: 'src/scenes/08-deep-dive/scene.js',       act: null },
-  { scene: faultToleranceScene,  path: 'src/scenes/11-fault-tolerance/scene.js', act: null },
+  { scene: placeholderScene, path: 'src/scenes/placeholder/scene.md', act: null },
 ];
 
 const stage = document.getElementById('stage');
