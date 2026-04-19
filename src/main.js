@@ -3,6 +3,9 @@ import { createPalette } from './commands/palette.js';
 import { compileMarkdownScene } from './authoring/markdown-scene.js';
 import { validateScenes } from './authoring/scene-validation.js';
 import { createErrorPlaceholderScene } from './authoring/scene-placeholder.js';
+import { mountErrorBanner } from './authoring/error-banner.js';
+import { createLastGoodCache } from './authoring/last-good-cache.js';
+import { subscribeDiagnostics } from './authoring/hmr-diagnostics.js';
 
 import { config, scenes as manifestScenes, issues, error } from 'virtual:content-manifest';
 
@@ -10,6 +13,12 @@ import { applyColorVars } from './shared/colors.js';
 import { sessionState } from './shared/session-state.js';
 import { createDebugOverlay } from './debug/overlay.js';
 import { createNavOverlay } from './debug/nav-overlay.js';
+
+const lastGood = createLastGoodCache();
+const banner = (import.meta.env?.DEV) ? mountErrorBanner(document.body) : null;
+if (banner && import.meta.hot) {
+  subscribeDiagnostics(import.meta.hot, ({ sceneId, diagnostics }) => banner.update(diagnostics));
+}
 
 let SCENE_SOURCES = buildSceneSources();
 
@@ -35,23 +44,30 @@ function buildSceneSources() {
 
   return manifestScenes.map(s => {
     try {
+      let entry;
       if (s.kind === 'md') {
-        return {
+        entry = {
           scene: compileMarkdownScene(s.source),
           path: `/content/${s.folder}/scene.md`,
           folder: s.folder,
         };
+      } else {
+        const mod = s.source;
+        const sceneExport = mod.default || Object.values(mod).find(v => v && v.init && v.destroy);
+        if (!sceneExport) throw new Error('scene.js has no exported scene module');
+        entry = {
+          scene: sceneExport,
+          path: `/content/${s.folder}/scene.js`,
+          folder: s.folder,
+        };
       }
-      const mod = s.source;
-      const sceneExport = mod.default || Object.values(mod).find(v => v && v.init && v.destroy);
-      if (!sceneExport) throw new Error('scene.js has no exported scene module');
-      return {
-        scene: sceneExport,
-        path: `/content/${s.folder}/scene.js`,
-        folder: s.folder,
-      };
+      lastGood.set(s.folder, entry);
+      return entry;
     } catch (err) {
       console.warn(`[content] scene ${s.folder} failed to load:`, err.message);
+      if (lastGood.has(s.folder)) {
+        return lastGood.get(s.folder);
+      }
       return {
         scene: createErrorPlaceholderScene({
           folder: s.folder,
