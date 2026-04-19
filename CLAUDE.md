@@ -101,7 +101,7 @@ Framework layers under `src/`. Content never lives here.
 | Section slides | `src/components/section-slide/` | `createSectionSlide` — large section breaks |
 | Title animations | `src/title-animations/` | `createTitleScene` + animation variants |
 | Three scenes | `src/components/three-scene/` | `createThreeScene` factory — boilerplate for 3D scenes |
-| SVG scenes | `src/svg-scenes/` | `createSvgScene` factory — boilerplate for SVG scenes |
+| SVG scenes | `src/components/svg-scene/` | `createSvgScene` factory — boilerplate for SVG scenes |
 
 Shared utilities: `src/shared/colors.js` (palette constants + CSS vars).
 
@@ -174,7 +174,7 @@ accent: "#aaccff"
 For custom behavior, use a factory from the catalogue. The factory absorbs renderer / lifecycle / cancellation boilerplate.
 
 - **Three.js scene** (`src/components/three-scene/scene-factory.js`) — `createThreeScene({ title, slides, setup, onTick, resolveStep, animateStep })`
-- **SVG scene** (`src/svg-scenes/scene-factory.js`) — `createSvgScene(...)`
+- **SVG scene** (`src/components/svg-scene/scene-factory.js`) — `createSvgScene(...)`
 - **Title animation** (`src/title-animations/`) — `createTitleScene` with animation variants (typewriter, drop, zoom-punch, spin-lock, extrude, reverse-explode)
 
 Minimal Three.js example:

@@ -122,7 +122,7 @@ const myScene = compileMarkdownScene(srcMd);
 For animated vector diagrams. The factory wraps the `html-scene` renderer, mounts an `<svg>` root and optional HTML overlay, and injects tracked `playTimeline` + `setTimeout` (auto-cancel on next step).
 
 ```js
-import { createSvgScene } from '../../svg-scenes/scene-factory.js';
+import { createSvgScene } from '../../components/svg-scene/scene-factory.js';
 import { colors } from '../../shared/colors.js';
 
 export const myScene = createSvgScene({

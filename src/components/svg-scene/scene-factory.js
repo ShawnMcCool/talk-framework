@@ -1,5 +1,5 @@
-import { createHtmlRenderer } from '../rendering/html-scene.js';
-import { createTrackedTimeline } from '../animation/tracked-timeline.js';
+import { createHtmlRenderer } from '../../rendering/html-scene.js';
+import { createTrackedTimeline } from '../../animation/tracked-timeline.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
