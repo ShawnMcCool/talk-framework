@@ -4,6 +4,17 @@ All notable changes to this project are recorded in this file. Version numbers f
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-04-20
+
+### Added
+- Palette wiring in the authoring surface — markdown scenes can reference palette tokens (`{{accent}}`, `{{textMuted}}`, etc.) and the compiler substitutes values from `src/shared/colors.js` at scene-compile time. Box-diagram role colors (`role=accent`, `role=neutral`) resolve through the same palette. Authors get one color story across every component instead of per-component overrides.
+
+### Removed
+- **Sub-project C scope cut back.** C1 (palette wiring) shipped with this release; the rest of C (title-animation markdown bridge, box-diagram vocabulary expansion, chapter chrome, 3D/SVG declarative subset) has been deferred and will be replanned if demand surfaces. `todo.md` trimmed accordingly — D (framework-version drift warning) is now the default next pick.
+
+### Internal
+- Dropped the unused `sceneType` binding in `bin/talk-lint.js` (`registry.getByFrontmatterType(parsed.type) || registry.getByName('content-slide')` was assigned but never read). Refreshed the architecture docs to remove stale `SCENE_SOURCES` / `src/scenes/` references.
+
 ## [0.3.0] — 2026-04-19
 
 ### Changed (BREAKING)
