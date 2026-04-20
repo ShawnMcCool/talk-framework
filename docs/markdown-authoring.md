@@ -147,27 +147,27 @@ api    -- SQL             --> database
 
 `{{tokenName}}` is replaced at compile time with
 `colors[tokenName]` from `src/shared/colors.js`. Any named entry in that
-export is valid: `{{bg}}`, `{{accent}}`, `{{beam}}`, `{{purple}}`, etc.
+export is valid: `{{bg}}`, `{{accent}}`, `{{purple}}`, `{{green}}`, etc.
 Unknown tokens are left literal.
 
 Example:
 
 ```markdown
-- <strong style="color:{{beam}}">BEAM</strong> is the runtime
+- <strong style="color:{{accent}}">Erlang</strong> is the language
 ```
 
 ## Example: content slide
 
 ```markdown
 ---
-title: Why the BEAM?
+title: Why it matters
 type: content
 accent: "#44bbff"
 ---
 
-# Why the BEAM?
+# Why it matters
 
-- Built for <strong style="color:{{beam}}">telecom</strong>
+- Built for <strong style="color:{{accent}}">resilience</strong>
 - Lightweight processes — millions, not thousands
 - Preemptive scheduling
 

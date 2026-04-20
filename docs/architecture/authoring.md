@@ -145,7 +145,7 @@ registry.getByBlockType(block.type)        // everything else
   the split happens at the line level (fenced code is the only context
   that protects it).
 - **HTML in markdown.** Passed through verbatim, which is great for
-  custom color spans (`<span style="color:{{beam}}">…</span>`) but means
+  custom color spans (`<span style="color:{{accent}}">…</span>`) but means
   an unclosed tag leaks into the rest of the slide.
 
 ## Palette

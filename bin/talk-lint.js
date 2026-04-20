@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import fs from 'node:fs';
 import path from 'node:path';
+import url from 'node:url';
 import { discoverScenes } from '../src/authoring/scene-discovery.lib.js';
 import { parseToml } from '../src/authoring/toml.lib.js';
 import { validateTalkConfig } from '../src/authoring/talk-config.lib.js';
@@ -8,6 +9,7 @@ import { parseMarkdownScene } from '../src/authoring/markdown-scene.lib.js';
 import { registry } from '../src/authoring/component-registry.js';
 import { formatDiagnostics } from '../src/authoring/diagnostic-printer.lib.js';
 import { walkSceneDiagnostics } from '../src/authoring/scene-diagnostics.lib.js';
+import { checkVersionDrift } from '../src/authoring/version-drift.lib.js';
 
 function findTalkRoot(start) {
   let dir = path.resolve(start);
@@ -45,6 +47,26 @@ try {
     allDiags.push({ severity: 'error', component: 'talk.toml', file: 'talk.toml', line: 1, column: 1, message: e });
     errorCount++;
   }
+
+  // Warn on framework_version / installed-CLI-version drift. Non-fatal.
+  if (parsed?.framework_version) {
+    const here = path.dirname(url.fileURLToPath(import.meta.url));
+    const pkg = JSON.parse(fs.readFileSync(path.join(here, '..', 'package.json'), 'utf8'));
+    const drift = checkVersionDrift({
+      declaredVersion: parsed.framework_version,
+      installedVersion: pkg.version,
+    });
+    if (!drift.ok) {
+      allDiags.push({
+        severity: 'warn',
+        component: 'talk.toml',
+        file: 'talk.toml',
+        line: 1, column: 1,
+        message: drift.message,
+      });
+      warnCount++;
+    }
+  }
 } catch (err) {
   allDiags.push({ severity: 'error', component: 'talk.toml', file: 'talk.toml', line: 1, column: 1, message: err.message });
   errorCount++;
@@ -69,7 +91,7 @@ for (const issue of issues) {
 for (const scene of scenes) {
   const sceneDir = path.join(root, scene.folder);
   const mdPath = path.join(sceneDir, 'scene.md');
-  if (!fs.existsSync(mdPath)) continue;   // JS scenes validated at runtime (Phase 8)
+  if (!fs.existsSync(mdPath)) continue;   // JS scenes validated at runtime, not at lint-time
 
   let parsed;
   try {

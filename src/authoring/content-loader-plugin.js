@@ -38,8 +38,11 @@ export function contentLoaderPlugin(options = {}) {
         if (!changed || !changed.startsWith(contentRoot)) return;
         const mod = server.moduleGraph.getModuleById(RESOLVED_ID);
         if (mod) {
-          server.moduleGraph.invalidateModule(mod);
-          server.ws.send({ type: 'full-reload' });
+          // Reload the virtual module in place. Vite propagates to importers
+          // (main.js) via its dep-specific import.meta.hot.accept handler —
+          // no page reload, so the last-good cache and error banner survive
+          // the edit and the "edge banner on last-good render" UX works.
+          server.reloadModule(mod);
         }
 
         // Emit diagnostics for markdown scene files when they change.

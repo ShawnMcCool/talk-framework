@@ -7,21 +7,28 @@ import { mountErrorBanner } from './authoring/error-banner.js';
 import { createLastGoodCache } from './authoring/last-good-cache.js';
 import { subscribeDiagnostics } from './authoring/hmr-diagnostics.js';
 
-import { config, scenes as manifestScenes, issues, error } from 'virtual:content-manifest';
+import * as initialManifest from 'virtual:content-manifest';
 
 import { applyColorVars, colors as defaultColors } from './shared/colors.js';
 import { sessionState } from './shared/session-state.js';
 import { createDebugOverlay } from './debug/overlay.js';
 import { createNavOverlay } from './debug/nav-overlay.js';
 
+// The manifest is re-read on HMR via the dep-specific accept handler at the
+// bottom of this file. Everything derived from it (deckId, title, palette,
+// SCENE_SOURCES) is refreshed there without re-evaluating the rest of this
+// module, so module-level singletons below (lastGood cache, error banner)
+// survive content edits.
+let currentManifest = initialManifest;
+
 // Used to scope saved navigation state (scene/slide/step) to the current deck,
 // so loading a different talk folder starts fresh at scene 1 / slide 1
 // instead of restoring the previous deck's last position.
-const deckId = config?.title ?? null;
+let deckId = currentManifest.config?.title ?? null;
 
 // Reflect the deck's title in the browser tab so multiple decks open in
 // different tabs stay distinguishable.
-if (config?.title) document.title = config.title;
+if (currentManifest.config?.title) document.title = currentManifest.config.title;
 
 const lastGood = createLastGoodCache();
 const banner = (import.meta.env?.DEV) ? mountErrorBanner(document.body) : null;
@@ -32,6 +39,8 @@ if (banner && import.meta.hot) {
 let SCENE_SOURCES = buildSceneSources();
 
 function buildSceneSources() {
+  const { config, scenes: manifestScenes, issues, error } = currentManifest;
+
   if (error) {
     return [{
       scene: createErrorPlaceholderScene({
@@ -91,7 +100,7 @@ function buildSceneSources() {
 }
 
 const stage = document.getElementById('stage');
-applyColorVars(document.documentElement, { ...defaultColors, ...(config?.palette || {}) });
+applyColorVars(document.documentElement, { ...defaultColors, ...(currentManifest.config?.palette || {}) });
 
 let engine = null;
 let palette = null;
@@ -296,9 +305,42 @@ function teardown() {
 setup();
 
 if (import.meta.hot) {
+  // Content edits (scene.md / scene.js / talk.toml): dep-specific accept.
+  // This module is NOT re-evaluated — the lastGood cache, error banner,
+  // and diagnostics subscription all survive the update. We rebuild
+  // SCENE_SOURCES from the new manifest, then tear down and rebuild the
+  // engine. Position is preserved by *folder name* (not numeric index) so
+  // mid-edit reorders/renames don't slip the current scene.
+  import.meta.hot.accept('virtual:content-manifest', (newManifest) => {
+    if (!newManifest) return;
+
+    const beforePos = engine?.getPosition();
+    const beforeFolder = beforePos ? SCENE_SOURCES[beforePos.sceneIndex]?.folder : null;
+
+    currentManifest = newManifest;
+    deckId = currentManifest.config?.title ?? null;
+    if (currentManifest.config?.title) document.title = currentManifest.config.title;
+    applyColorVars(document.documentElement, { ...defaultColors, ...(currentManifest.config?.palette || {}) });
+
+    SCENE_SOURCES = buildSceneSources();
+
+    teardown();
+    setup();
+
+    if (beforeFolder) {
+      const newIndex = SCENE_SOURCES.findIndex(s => s.folder === beforeFolder);
+      if (newIndex >= 0 && beforePos) {
+        engine.goToScene(newIndex);
+        engine.goToSlide?.(beforePos.slideIndex, beforePos.stepIndex);
+      }
+    }
+  });
+
+  // Framework src/ edits: fall back to self-accept. This re-evaluates the
+  // whole module, which loses the lastGood cache — but framework edits are
+  // rare compared to content edits, and the author isn't mid-compose on the
+  // framework itself.
   import.meta.hot.accept(() => {
-    // setup() itself restores position from localStorage and rebinds overlays
-    // to the new engine — no need to pass the old position through.
     teardown();
     setup();
   });

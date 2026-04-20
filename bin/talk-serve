@@ -28,6 +28,9 @@ ROOT="$(find_talk_root "$START")" || {
 echo "talk serve: $ROOT"
 echo "            http://localhost:3000"
 
+# Preflight: warn (non-fatal) on framework_version drift before starting docker.
+node "$FRAMEWORK_ROOT/bin/talk-preflight.js" "$ROOT" || true
+
 export CONTENT_DIR="$ROOT"
 cd "$FRAMEWORK_ROOT"
 # `up` without --build: first run builds; subsequent runs reuse the cached
