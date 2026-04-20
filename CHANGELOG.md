@@ -4,6 +4,18 @@ All notable changes to this project are recorded in this file. Version numbers f
 
 ## [Unreleased]
 
+## [0.5.0] — 2026-04-20
+
+### Added
+- **Framework-version drift warning** (sub-project D). `talk lint` emits a `warn` diagnostic and `talk serve` prints a stderr warning when a deck's `talk.toml` declares a `framework_version` whose major.minor doesn't match the installed CLI. Pre-1.0 semantics: patch differences are ignored; declared versions may omit the patch (`"0.5"`). Non-fatal — the deck still loads. Logic is pure (`src/authoring/version-drift.lib.js`, 8 tests) and shared between the lint JS and a small `bin/talk-preflight.js` helper.
+
+### Changed
+- **HMR preserves state across content edits.** `content-loader-plugin.js` no longer broadcasts `ws.send({ type: 'full-reload' })` when a scene changes; it calls `server.reloadModule(mod)` so Vite propagates the update through the normal HMR pipeline. `main.js` now takes a namespace import of `virtual:content-manifest` and a dep-specific `import.meta.hot.accept('virtual:content-manifest', …)` handler that rebuilds `SCENE_SOURCES` + restarts the engine *without re-evaluating the module*, so the last-good cache, the error banner, and the diagnostics subscription survive every edit. Current-scene position is now followed by **folder name** (not numeric index) across the update, so mid-edit `talk add` / `talk move` / `talk rename` no longer slip the cursor.
+- **Shipped talk.toml files bumped** (`templates/new-talk/`, `examples/*`, `fixtures/sample-talk/`, `test/fixtures/b-linter/*`) from `0.1` / `0.1.0` to `"0.5"` so they match this release and don't trigger the new drift warning.
+
+### Docs
+- `docs/architecture/authoring.md` and `docs/markdown-authoring.md` replaced BEAM-flavored examples with generic ones (`{{beam}}` → `{{accent}}` in example snippets; "Why the BEAM?" → "Why it matters"). `bin/talk-lint.js` scrubbed of a stale `(Phase 8)` comment. `todo.md` is now one sub-project long (D done; deferred polish + minor cleanups) and refreshed `§5 Default` to reflect post-D state.
+
 ## [0.4.0] — 2026-04-20
 
 ### Added
