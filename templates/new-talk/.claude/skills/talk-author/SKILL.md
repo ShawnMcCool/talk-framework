@@ -113,7 +113,7 @@ type: content
 | Syntax | Produces |
 | --- | --- |
 | `# Text` / `## Text` / `### Text` | heading, level 1 / 2 / 3 |
-| `- item` (consecutive lines) | bullet list |
+| `- item` (consecutive lines) | bullet list; indent by 2 spaces or 1 tab to nest |
 | `> line`<br>`> — Attribution` | blockquote; trailing `— …` is attribution |
 | ` ```lang\ncode\n``` ` | code block with language |
 | `:spacer:` or `:spacer lg:` | vertical spacer |

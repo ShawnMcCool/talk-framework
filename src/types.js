@@ -190,9 +190,15 @@
  */
 
 /**
+ * @typedef {Object} BulletItem
+ * @property {string} text
+ * @property {number} [depth] - 0 = top-level, 1 = first sub-level, etc.
+ */
+
+/**
  * @typedef {Object} BulletsBlock
  * @property {'bullets'} type
- * @property {string[]} items
+ * @property {BulletItem[]} items
  * @property {string} [accent]
  */
 

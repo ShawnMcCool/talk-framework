@@ -7,6 +7,7 @@ export function parseFlags(argv) {
   let after = null;
   let before = null;
   let force = false;
+  let noCi = false;
 
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
@@ -14,6 +15,7 @@ export function parseFlags(argv) {
       case '--dry-run': dryRun = true; break;
       case '--first': first = true; break;
       case '--force': force = true; break;
+      case '--no-ci': noCi = true; break;
       case '--after':
       case '--before': {
         const v = argv[++i];
@@ -29,7 +31,7 @@ export function parseFlags(argv) {
     }
   }
 
-  return { positional, dryRun, first, after, before, force };
+  return { positional, dryRun, first, after, before, force, noCi };
 }
 
 export function printPlan(plan, out = console.log) {

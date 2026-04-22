@@ -18,3 +18,7 @@ talk list                  print the deck outline
 ```
 
 Never hand-rename `NN-<slug>/` folders — use `talk move` / `talk rename` so the prefix math stays consistent.
+
+## Deploying
+
+This talk ships with a GitHub Pages workflow at `.github/workflows/deploy.yml`. Push to GitHub, then enable Pages under **Settings → Pages → Source: GitHub Actions**. Every subsequent push to `main` rebuilds and republishes. Delete the `.github/` folder to opt out.

@@ -1,6 +1,6 @@
 title = "{{TALK_NAME}}"
 author = ""
-framework_version = "0.5"
+framework_version = "0.7"
 
 [palette]
 # Override framework default palette tokens here.

@@ -55,7 +55,7 @@ silently ignores them. Typos won't warn.
 | `# Text` | `{ type: 'heading', level: 1, text }` |
 | `## Text` | `{ type: 'heading', level: 2, text }` |
 | `### Text` | `{ type: 'heading', level: 3, text }` |
-| `- item` / `* item` (consecutive lines) | `{ type: 'bullets', items: [...] }` |
+| `- item` / `* item` (consecutive lines) | `{ type: 'bullets', items: [{ text, depth }] }` |
 | `> line 1`<br>`> line 2`<br>`> — attribution` | `{ type: 'quote', text, attribution? }` |
 | ```` ```lang<br>code<br>``` ```` | `{ type: 'code', code, language }` |
 | `:spacer:` | `{ type: 'spacer' }` |
@@ -66,6 +66,16 @@ silently ignores them. Typos won't warn.
 Notes:
 
 - Bullet lists consume contiguous `-`/`*` lines; a blank line ends the list.
+  Indent a bullet to nest it under the previous item. One level of nesting
+  per 2 spaces **or** per tab (a tab counts the same as two spaces, regardless
+  of how your editor displays it):
+
+  ```
+  - top-level
+    - nested
+    - also nested
+  - another top-level
+  ```
 - Quote attribution is detected by a trailing line starting with `—` or `--`
   and stripped from the quote body.
 - Code fences are line-level: they must start at column 0.

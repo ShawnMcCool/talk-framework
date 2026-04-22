@@ -18,8 +18,8 @@ function rgba(hex, alpha) {
 }
 
 /**
- * Create a reusable 2D section slide scene (large shimmering title, optional
- * subtitle, animated letter-in intro).
+ * Create a reusable 2D section slide scene (large title with soft static
+ * glow, optional subtitle, animated letter-in intro).
  *
  * @param {string} title - Main heading text (required)
  * @param {import('../types.js').SectionSlideOptions} [opts]
@@ -52,21 +52,6 @@ export function createSectionSlide(title, {
   function injectStyles(container) {
     const style = document.createElement('style');
     style.textContent = `
-      @keyframes ${id}-shimmer {
-        0% { background-position: -200% center; }
-        100% { background-position: 200% center; }
-      }
-      @keyframes ${id}-glow-pulse {
-        0%, 100% { text-shadow:
-          0 0 20px ${rgba(accent, 0.4)},
-          0 0 60px ${rgba(accent, 0.15)};
-        }
-        50% { text-shadow:
-          0 0 30px ${rgba(accent, 0.6)},
-          0 0 80px ${rgba(accent, 0.25)},
-          0 0 120px ${rgba(accent, 0.1)};
-        }
-      }
       @keyframes ${id}-rule-expand {
         from { transform: scaleX(0); }
         to { transform: scaleX(1); }
@@ -76,8 +61,8 @@ export function createSectionSlide(title, {
         to { opacity: 1; transform: translateY(0); }
       }
       @keyframes ${id}-letter-in {
-        from { opacity: 0; transform: translateY(40px) scale(0.8); filter: blur(6px); }
-        to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+        from { opacity: 0; transform: translateY(24px); filter: blur(4px); }
+        to { opacity: 1; transform: translateY(0); filter: blur(0); }
       }
     `;
     container.appendChild(style);
@@ -120,29 +105,6 @@ export function createSectionSlide(title, {
       spans.push(span);
     }
 
-    const shimmer = document.createElement('div');
-    shimmer.style.cssText = `
-      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      background: linear-gradient(
-        120deg,
-        transparent 25%,
-        ${accent}33 45%,
-        ${accent}22 50%,
-        ${accent}33 55%,
-        transparent 75%
-      );
-      background-size: 200% 100%;
-      -webkit-background-clip: text; background-clip: text;
-      color: transparent; pointer-events: none;
-      opacity: 0;
-    `;
-    shimmer.textContent = title;
-    shimmer.style.fontFamily = titleEl.style.fontFamily;
-    shimmer.style.fontWeight = titleEl.style.fontWeight;
-    shimmer.style.fontSize = titleEl.style.fontSize;
-    shimmer.style.letterSpacing = titleEl.style.letterSpacing;
-    shimmer.style.lineHeight = titleEl.style.lineHeight;
-
     const bottomRule = document.createElement('div');
     bottomRule.style.cssText = `
       position: absolute; bottom: 25%; left: 20%; right: 20%; height: 1px;
@@ -150,13 +112,8 @@ export function createSectionSlide(title, {
       transform: scaleX(0); transform-origin: center;
     `;
 
-    const titleWrap = document.createElement('div');
-    titleWrap.style.cssText = 'position: relative;';
-    titleWrap.appendChild(titleEl);
-    titleWrap.appendChild(shimmer);
-
     wrap.appendChild(topRule);
-    wrap.appendChild(titleWrap);
+    wrap.appendChild(titleEl);
 
     let subtitleEl = null;
     if (subtitle) {
@@ -174,19 +131,22 @@ export function createSectionSlide(title, {
     wrap.appendChild(bottomRule);
     container.appendChild(wrap);
 
-    return { wrap, titleEl, shimmer, topRule, bottomRule, subtitleEl, spans };
+    return { wrap, titleEl, topRule, bottomRule, subtitleEl, spans };
   }
+
+  // Soft static glow replaces the old infinite shimmer + glow-pulse — keeps
+  // the title visually present without flicker.
+  const settledShadow = `0 0 28px ${rgba(accent, 0.35)}, 0 0 70px ${rgba(accent, 0.15)}`;
 
   function showIntro(e) {
     clearTimeouts();
     for (const s of e.spans) { s.style.opacity = '0'; s.style.animation = 'none'; }
-    e.shimmer.style.opacity = '0';
-    e.shimmer.style.animation = 'none';
     e.topRule.style.transform = 'scaleX(0)';
     e.topRule.style.animation = 'none';
     e.bottomRule.style.transform = 'scaleX(0)';
     e.bottomRule.style.animation = 'none';
     e.titleEl.style.animation = 'none';
+    e.titleEl.style.textShadow = '';
     if (e.subtitleEl) { e.subtitleEl.style.opacity = '0'; e.subtitleEl.style.animation = 'none'; }
   }
 
@@ -196,9 +156,8 @@ export function createSectionSlide(title, {
       s.style.opacity = '1'; s.style.animation = 'none';
       s.style.transform = 'none'; s.style.filter = 'none';
     }
-    e.shimmer.style.opacity = '1';
-    e.shimmer.style.animation = `${id}-shimmer 4s linear infinite`;
-    e.titleEl.style.animation = `${id}-glow-pulse 3s ease-in-out infinite`;
+    e.titleEl.style.animation = 'none';
+    e.titleEl.style.textShadow = settledShadow;
     e.topRule.style.transform = 'scaleX(1)';
     e.topRule.style.animation = 'none';
     e.bottomRule.style.transform = 'scaleX(1)';
@@ -222,14 +181,13 @@ export function createSectionSlide(title, {
       e.subtitleEl.style.animation = `${id}-fade-up 0.5s ${lettersDone + 200}ms ease-out forwards`;
     }
 
-    const shimmerStart = lettersDone + 600;
+    const settleAt = lettersDone + 600;
     later(() => {
-      e.shimmer.style.opacity = '1';
-      e.shimmer.style.animation = `${id}-shimmer 4s linear infinite`;
-      e.titleEl.style.animation = `${id}-glow-pulse 3s ease-in-out infinite`;
-    }, shimmerStart);
+      e.titleEl.style.transition = 'text-shadow 0.8s ease-out';
+      e.titleEl.style.textShadow = settledShadow;
+    }, settleAt);
 
-    later(() => { done(); }, shimmerStart + 200);
+    later(() => { done(); }, settleAt + 200);
   }
 
   return {

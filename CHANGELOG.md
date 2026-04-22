@@ -4,6 +4,26 @@ All notable changes to this project are recorded in this file. Version numbers f
 
 ## [Unreleased]
 
+## [0.7.0] — 2026-04-22
+
+### Added
+- **GitHub Pages deploy workflow scaffolded by `talk new`.** Every new talk ships with `.github/workflows/deploy.yml` — on push to `main`, the workflow checks out the talk alongside a sibling `talk-framework` checkout, runs `npm install && npm run build`, and publishes `dist/` via `actions/deploy-pages@v4`. Authors enable Pages in repo settings once; push-to-deploy works after that. Pass `--no-ci` to `talk new` to skip the workflow.
+- **`CONTENT_DIR` honored at build time.** `vite.config.js` now reads `process.env.CONTENT_DIR` with a `/content` fallback, so CI can point the build at an arbitrary content checkout without Docker.
+- **Nested bullet lists.** Indent a bullet by two spaces **or** one tab to nest it under the previous item; tabs count the same as two spaces regardless of editor tab-display width. Parser emits `items: [{ text, depth }]`; renderer emits nested `<ul>` and the content-slide CSS styles sub-bullets smaller and muted for visual hierarchy.
+
+### Changed
+- **Vite `base` is `'./'` unconditionally.** Relative asset URLs work across project pages (`/<repo>/`), user/org pages, custom domains, and any other static host — no env detection, no per-deploy configuration. Replaces the previous `'/talk/'`-in-production conditional.
+- **Bullet-dot alignment.** Top-level and sub bullets are now vertically centered on the first line of their text (previously the dot sat above the text midline). Dots are positioned via `calc(padding-top + 0.85em − half-bullet)` so the geometry follows the line-height.
+- **`+++` between bullet lists no longer creates a visible gap.** A CSS `:has()` rule collapses the between-list margin when adjacent reveal-step blocks each contain only a bullet list, so progressive bullet reveals read as one continuous list.
+- **Section-slide animation is calmer.** The infinite shimmer sweep and glow-pulse have been removed; after letter-in the title settles to a static soft glow. The letter-in itself is gentler (shorter translate, less blur, no scale bounce).
+
+### Tests
+- `bin/talk-new.js.test.js` asserts the scaffolded workflow is present by default and absent under `--no-ci`.
+- `markdown-scene.lib.test.js` covers the new `{text, depth}` bullet shape plus nesting via spaces, tabs, and mixed indentation.
+
+### Breaking
+- `BulletsBlock.items` is now `Array<{ text, depth }>` instead of `string[]`. Any JS-authored code that constructs bullet blocks by hand must update. No built-in scenes or examples constructed bullets this way.
+
 ## [0.6.0] — 2026-04-22
 
 ### Added

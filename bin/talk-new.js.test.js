@@ -24,6 +24,7 @@ test('scaffolds a new talk with talk.toml and a welcome scene', () => {
     assert.ok(fs.existsSync(path.join(root, '01-welcome/scene.md')));
     assert.ok(fs.existsSync(path.join(root, 'CLAUDE.md')));
     assert.ok(fs.existsSync(path.join(root, '.claude/skills/talk-author/SKILL.md')));
+    assert.ok(fs.existsSync(path.join(root, '.github/workflows/deploy.yml')));
 
     const toml = fs.readFileSync(path.join(root, 'talk.toml'), 'utf8');
     assert.match(toml, /title = "my-talk"/);
@@ -54,6 +55,20 @@ test('refuses if the target folder already exists and is non-empty', () => {
     const result = runNew(['my-talk'], tmp);
     assert.notEqual(result.status, 0);
     assert.match(result.stderr, /exists/);
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+test('--no-ci omits the GitHub Pages workflow', () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'talk-new-'));
+  try {
+    const result = runNew(['my-talk', '--no-ci'], tmp);
+    assert.equal(result.status, 0, result.stderr);
+
+    const root = path.join(tmp, 'my-talk');
+    assert.ok(fs.existsSync(path.join(root, 'talk.toml')));
+    assert.ok(!fs.existsSync(path.join(root, '.github')));
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });
   }

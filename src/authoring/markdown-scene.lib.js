@@ -166,12 +166,17 @@ function parseSlideBlocks(lines) {
       continue;
     }
 
-    // Bullets
+    // Bullets — one level of nesting per 2 spaces OR per tab. An item's
+    // depth is floor((spaces + tabs × 2) / 2); equivalently, tab counts
+    // the same as 2 spaces regardless of the editor's tab-display width.
     if (/^[-*]\s+/.test(trimmed)) {
       const startLine = i + 1;
       const items = [];
-      while (i < lines.length && /^\s*[-*]\s+/.test(lines[i])) {
-        items.push(lines[i].replace(/^\s*[-*]\s+/, ''));
+      while (i < lines.length && /^[ \t]*[-*]\s+/.test(lines[i])) {
+        const m = lines[i].match(/^([ \t]*)[-*]\s+(.*)$/);
+        const spaces = m[1].replace(/\t/g, '  ').length;
+        const depth = Math.floor(spaces / 2);
+        items.push({ text: m[2], depth });
         i++;
       }
       push({ type: 'bullets', items, line: startLine });

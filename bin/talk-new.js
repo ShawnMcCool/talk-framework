@@ -19,7 +19,7 @@ try {
 
 const [name] = opts.positional;
 if (!name) {
-  console.error('talk new: missing <name>. Usage: talk new <name> [--force] [--dry-run]');
+  console.error('talk new: missing <name>. Usage: talk new <name> [--force] [--dry-run] [--no-ci]');
   process.exit(2);
 }
 if (!/^[a-z0-9][a-z0-9-]*$/.test(name)) {
@@ -42,7 +42,10 @@ if (!fs.existsSync(templateRoot)) {
   process.exit(2);
 }
 
-const plan = collectFiles(templateRoot, '');
+let plan = collectFiles(templateRoot, '');
+if (opts.noCi) {
+  plan = plan.filter((rel) => !rel.startsWith('.github/'));
+}
 if (opts.dryRun) {
   console.log(`talk new: would create ${plan.length} file(s) under ${name}/:`);
   for (const rel of plan) console.log(`  ${name}/${rel}`);

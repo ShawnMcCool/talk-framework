@@ -64,12 +64,33 @@ export function createContentSlide(title, slides, opts = {}) {
       }
       .${id}-bullets li {
         font-size: 1.4rem; line-height: 1.7; color: ${c.text};
-        padding: 0.3rem 0 0.3rem 1.8rem; position: relative;
+        padding: 0.2rem 0 0.2rem 1.8rem; position: relative;
       }
       .${id}-bullets li::before {
-        content: ''; position: absolute; left: 0; top: 0.85rem;
+        content: ''; position: absolute; left: 0.4rem;
+        top: calc(0.2rem + 0.85em - 4px);
         width: 8px; height: 8px; border-radius: 50%;
         background: ${c.accent};
+      }
+      .${id}-bullets-sub {
+        margin: 0.1rem 0 0.3rem 0;
+      }
+      .${id}-bullets-sub li {
+        font-size: 1.2rem; line-height: 1.6; color: ${c.textMuted};
+        padding: 0.15rem 0 0.15rem 1.4rem;
+      }
+      .${id}-bullets-sub li::before {
+        left: 0.2rem;
+        top: calc(0.15rem + 0.8em - 3px);
+        width: 6px; height: 6px;
+        background: ${c.textMuted};
+      }
+      /* +++ between bullet lists reads as one continuous list, not two. */
+      .${id}-block:has(> .${id}-bullets:only-child) + .${id}-block:has(> .${id}-bullets:only-child) > .${id}-bullets {
+        margin-top: 0;
+      }
+      .${id}-block:has(> .${id}-bullets:only-child):has(+ .${id}-block > .${id}-bullets:only-child) > .${id}-bullets {
+        margin-bottom: 0;
       }
       .${id}-code {
         background: ${c.bgDarker}; border: 1px solid ${c.bgDark};

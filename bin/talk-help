@@ -38,12 +38,14 @@ case "$SUBCOMMAND" in
     cat <<'EOF'
 talk new <name>
 
-Scaffold a new presentation folder at ./<name>/ containing talk.toml and
-one starter scene. The target folder must not already exist, unless --force.
+Scaffold a new presentation folder at ./<name>/ containing talk.toml,
+one starter scene, and a GitHub Pages deploy workflow. The target folder
+must not already exist, unless --force.
 
 OPTIONS
   --force        allow creating inside an existing non-empty folder
   --dry-run      print what would be created; make no filesystem changes
+  --no-ci        skip scaffolding the .github/ GitHub Pages workflow
 
 EXAMPLE
   talk new my-elixir-talk

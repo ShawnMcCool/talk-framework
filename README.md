@@ -126,7 +126,7 @@ Every subcommand that touches a presentation resolves the presentation root by w
 
 | Command | Purpose |
 |---------|---------|
-| `talk new <name> [--force] [--dry-run]` | Scaffold a new presentation at `./<name>/` with `talk.toml` and one starter scene. |
+| `talk new <name> [--force] [--dry-run] [--no-ci]` | Scaffold a new presentation at `./<name>/` with `talk.toml`, one starter scene, and a GitHub Pages deploy workflow (use `--no-ci` to skip the workflow). |
 | `talk add <slug> [--after N \| --first] [--dry-run]` | Add a new empty scene. Defaults to appending. |
 | `talk remove <N> [--dry-run]` | Delete scene `N`. Later scenes renumber to close the gap. |
 | `talk rename <N> <new-slug> [--dry-run]` | Change scene `N`'s slug (number preserved). |
@@ -137,6 +137,20 @@ Every subcommand that touches a presentation resolves the presentation root by w
 | `talk version` | Print the installed framework version. |
 | `talk test` | Run the framework's own tests (framework repo only). |
 | `talk help [<command>]` | Show usage. |
+
+## Deploying
+
+`talk new` scaffolds `.github/workflows/deploy.yml` by default. On every push to `main`, the workflow clones the `talk-framework` repo alongside your content, runs `npm run build`, and publishes the `dist/` to GitHub Pages via the official `actions/deploy-pages` action.
+
+To enable it:
+
+1. Push your talk to a GitHub repo.
+2. In the repo's **Settings → Pages**, set **Source** to **GitHub Actions**.
+3. Push to `main` (or run the workflow manually from the Actions tab).
+
+The build sets Vite's `base` to `'./'`, so relative asset URLs work on project pages (`/<repo>/`), user/org pages, and custom domains without any configuration. Pass `--no-ci` to `talk new` to skip the workflow entirely.
+
+Other static hosts (Cloudflare Pages, Netlify, plain rsync) work the same way — the deploy artifact is a vanilla static bundle.
 
 ## Dev-mode UX
 

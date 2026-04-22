@@ -21,7 +21,7 @@ No open sub-projects remain on the default queue. Deferred sub-project C (see §
 ## 3. Minor cleanups
 
 - **Browser test harness** — today's 249 tests cover pure libs and CLI integration. End-to-end (markdown → rendered DOM parity) is manual. Worth building if rendering regressions start sneaking in. Needs design.
-- **npm packaging** — make the framework installable as a real package. Not needed for local-first use; nice-to-have for distribution. Needs design (naming, layout, deps, release workflow).
+- **npm packaging** — make the framework installable as a real package. Not needed for local-first use; nice-to-have for distribution. Needs design (naming, layout, deps, release workflow). **Leaning toward this as the long-term target once the GitHub Pages deploy story lands** — CI currently installs the framework by cloning a sibling checkout (simple, zero publishing overhead), but `npm ci && npx talk build` would be cleaner once a publish cadence exists. Migration is a few-line workflow change.
 
 ---
 

@@ -1,10 +1,14 @@
 import { openInEditorPlugin } from './src/authoring/dev-middleware.js';
 import { contentLoaderPlugin } from './src/authoring/content-loader-plugin.js';
 
+// Relative base works everywhere: project pages (/repo/), user/org pages,
+// custom domains, and any other static host — no env detection needed.
+// CONTENT_DIR lets CI point the build at the content checkout; Docker
+// mounts the content folder at /content, which is the dev-mode default.
 export default {
-  base: process.env.NODE_ENV === 'production' ? '/talk/' : '/',
+  base: './',
   plugins: [
-    contentLoaderPlugin({ contentRoot: '/content' }),
+    contentLoaderPlugin({ contentRoot: process.env.CONTENT_DIR || '/content' }),
     openInEditorPlugin(),
   ],
   server: {

@@ -103,14 +103,66 @@ describe('parseSlideBody', () => {
     const slides = parseSlideBody('- alpha\n- beta\n- gamma');
     assert.deepEqual(slides[0][0][0], {
       type: 'bullets',
-      items: ['alpha', 'beta', 'gamma'],
+      items: [
+        { text: 'alpha', depth: 0 },
+        { text: 'beta', depth: 0 },
+        { text: 'gamma', depth: 0 },
+      ],
       line: 1,
     });
   });
 
   it('supports * as bullet marker', () => {
     const slides = parseSlideBody('* one\n* two');
-    assert.deepEqual(slides[0][0][0], { type: 'bullets', items: ['one', 'two'], line: 1 });
+    assert.deepEqual(slides[0][0][0], {
+      type: 'bullets',
+      items: [
+        { text: 'one', depth: 0 },
+        { text: 'two', depth: 0 },
+      ],
+      line: 1,
+    });
+  });
+
+  it('indents of 2 spaces nest bullets by one depth level', () => {
+    const slides = parseSlideBody('- top\n  - sub a\n  - sub b\n- next top');
+    assert.deepEqual(slides[0][0][0], {
+      type: 'bullets',
+      items: [
+        { text: 'top', depth: 0 },
+        { text: 'sub a', depth: 1 },
+        { text: 'sub b', depth: 1 },
+        { text: 'next top', depth: 0 },
+      ],
+      line: 1,
+    });
+  });
+
+  it('four-space indent counts as depth 2', () => {
+    const slides = parseSlideBody('- a\n  - b\n    - c');
+    assert.deepEqual(slides[0][0][0].items, [
+      { text: 'a', depth: 0 },
+      { text: 'b', depth: 1 },
+      { text: 'c', depth: 2 },
+    ]);
+  });
+
+  it('one tab counts as one level of nesting (same as two spaces)', () => {
+    const slides = parseSlideBody('- a\n\t- b\n\t\t- c');
+    assert.deepEqual(slides[0][0][0].items, [
+      { text: 'a', depth: 0 },
+      { text: 'b', depth: 1 },
+      { text: 'c', depth: 2 },
+    ]);
+  });
+
+  it('mixed tabs and spaces nest consistently', () => {
+    const slides = parseSlideBody('- a\n\t- b\n  \t- c');
+    assert.deepEqual(slides[0][0][0].items, [
+      { text: 'a', depth: 0 },
+      { text: 'b', depth: 1 },
+      { text: 'c', depth: 2 },
+    ]);
   });
 
   it('parses a blockquote', () => {
@@ -271,7 +323,7 @@ title: X
 
 - Designed for <strong style="color:{{beam}}">telecom</strong>`;
     const parsed = parseMarkdownScene(src, { beam: '#FF9500' });
-    assert.equal(parsed.slides[0][0][0].items[0],
+    assert.equal(parsed.slides[0][0][0].items[0].text,
       'Designed for <strong style="color:#FF9500">telecom</strong>');
   });
 
