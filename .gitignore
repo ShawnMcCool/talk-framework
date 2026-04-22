@@ -3,10 +3,10 @@ dist/
 tmp/
 package-lock.json
 
-# AI / tool-specific local state
-.claude/
-.serena/
-.superpowers/
+# AI / tool-specific local state (repo root only — templates may ship .claude/)
+/.claude/
+/.serena/
+/.superpowers/
 
 # Private planning artifacts (specs ship; plans are internal chatter)
 docs/superpowers/plans/

@@ -4,6 +4,18 @@ All notable changes to this project are recorded in this file. Version numbers f
 
 ## [Unreleased]
 
+## [0.6.0] — 2026-04-22
+
+### Added
+- **Project-local `talk-author` Claude skill.** `talk new` now installs `.claude/skills/talk-author/SKILL.md` and a minimal `CLAUDE.md` into every new talk. The skill is self-contained (no dependency on the framework repo being nearby) and covers the edit → `talk lint` → verify loop, the `talk` CLI, markdown block syntax, the box-diagram DSL, the JS scene contract (determinism + single-`done()`), common pitfalls, and narrative-craft guidance (one idea per slide, section slides as chapter breaks, reveal steps used sparingly). Frontmatter `description` is tuned so Claude auto-invokes on authoring-style requests.
+- `templates/new-talk/CLAUDE.md` — tiny always-loaded prologue that signposts the skill and lists the three core CLI commands.
+
+### Changed
+- **`.gitignore` anchored.** `.claude/`, `.serena/`, `.superpowers/` are now `/.claude/`, `/.serena/`, `/.superpowers/` so they only ignore the repo-root tooling state and don't swallow `templates/new-talk/.claude/`.
+
+### Tests
+- `bin/talk-new.js.test.js` asserts the installed skill + CLAUDE.md exist, that `{{TALK_NAME}}` is interpolated into CLAUDE.md, and that `--dry-run` lists both paths.
+
 ## [0.5.0] — 2026-04-20
 
 ### Added
