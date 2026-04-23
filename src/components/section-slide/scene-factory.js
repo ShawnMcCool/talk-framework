@@ -31,7 +31,7 @@ export function createSectionSlide(title, {
   bg = colors.bg,
   bgDark = colors.bgDark,
   text: textColor = colors.text,
-  fontSize = '7rem',
+  fontSize = '9rem',
   letterStagger = 50,
 } = {}) {
   const id = `ss-${instanceCounter++}`;
@@ -80,7 +80,7 @@ export function createSectionSlide(title, {
 
     const topRule = document.createElement('div');
     topRule.style.cssText = `
-      position: absolute; top: 25%; left: 20%; right: 20%; height: 1px;
+      position: absolute; top: 15%; left: 15%; right: 15%; height: 1px;
       background: linear-gradient(90deg, transparent, ${accent}44, transparent);
       transform: scaleX(0); transform-origin: center;
     `;
@@ -107,7 +107,7 @@ export function createSectionSlide(title, {
 
     const bottomRule = document.createElement('div');
     bottomRule.style.cssText = `
-      position: absolute; bottom: 25%; left: 20%; right: 20%; height: 1px;
+      position: absolute; bottom: 15%; left: 15%; right: 15%; height: 1px;
       background: linear-gradient(90deg, transparent, ${accent}44, transparent);
       transform: scaleX(0); transform-origin: center;
     `;
@@ -120,9 +120,9 @@ export function createSectionSlide(title, {
       subtitleEl = document.createElement('div');
       subtitleEl.style.cssText = `
         font-family: system-ui, -apple-system, sans-serif;
-        font-weight: 300; font-size: 1.1rem; letter-spacing: 0.25em;
-        text-transform: uppercase; color: ${accent}; opacity: 0;
-        margin-top: 1.5rem;
+        font-weight: 400; font-size: 2rem; letter-spacing: 0.02em;
+        color: ${accent}; opacity: 0;
+        margin-top: 2rem;
       `;
       subtitleEl.textContent = subtitle;
       wrap.appendChild(subtitleEl);

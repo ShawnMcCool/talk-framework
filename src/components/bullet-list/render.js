@@ -24,6 +24,7 @@ export function renderBulletList(data, renderContext) {
       let host = parent.lastElementChild;
       if (!host || host.tagName !== 'LI') {
         host = document.createElement('li');
+        host.className = `${classPrefix}-empty-host`;
         parent.appendChild(host);
       }
       const sub = document.createElement('ul');

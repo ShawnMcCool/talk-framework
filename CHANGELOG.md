@@ -4,6 +4,20 @@ All notable changes to this project are recorded in this file. Version numbers f
 
 ## [Unreleased]
 
+## [0.8.0] — 2026-04-23
+
+### Changed
+- **Reveal-step syntax now uses an in-content `+++ ` prefix.** The marker lives *inside* a block's content, after its markdown structural marker, so source files stay valid markdown for any editor or preview tool that doesn't know about reveal steps. Use `# +++ Title`, `> +++ line`, `- +++ item`, or a leading `+++ Text.` on a paragraph. Code fences, box-diagrams, and `:spacer:` directives don't take a step prefix — put the `+++ ` on whatever block precedes them.
+- **Progressive bullet lists render as one `<ul>`.** Every `- +++ item` in a contiguous list opens a new reveal step while the list stays a single visually continuous element; bullets without `+++` join the currently-revealing step. The content-slide renderer collects consecutive `continuation: true` bullet steps via `bulletRunEnd` / `renderBulletRun` and animates each `<li>` individually with `${id}-bullet-item` styling, so reveals are smooth without re-nesting or losing sub-bullet styling across step boundaries.
+- **Section-slide title default size bumped to `9rem`** (from `7rem`); rules pulled tighter to 15%/15% (from 25%/20%) for a more spacious composition.
+
+### Removed (Breaking)
+- **Bare `+++` line as a step separator is gone.** Migrate by moving the marker onto the next block's content (e.g. `+++\n\n> quote` → `> +++ quote`).
+- **`+++- text` inline bullet syntax is gone.** Replace with `- +++ text` — same semantics, but the line is also a real markdown bullet.
+
+### Tests
+- `markdown-scene.lib.test.js` covers the in-content `+++ ` prefix on every block type that supports it (heading, quote, paragraph, bullet), the mid-paragraph break-out behavior, and the empty-first-step elision; bullet-continuation tests assert the per-group `continuation: true` flagging the renderer relies on.
+
 ## [0.7.0] — 2026-04-22
 
 ### Added

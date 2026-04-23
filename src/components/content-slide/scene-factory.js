@@ -50,6 +50,12 @@ export function createContentSlide(title, slides, opts = {}) {
         transition: opacity 0.4s ease-out, transform 0.4s ease-out;
       }
       .${id}-block.instant { opacity: 1; transform: translateY(0); transition: none; }
+      .${id}-bullet-item { opacity: 0; transform: translateY(12px); }
+      .${id}-bullet-item.visible {
+        opacity: 1; transform: translateY(0);
+        transition: opacity 0.35s ease-out, transform 0.35s ease-out;
+      }
+      .${id}-bullet-item.instant { opacity: 1; transform: translateY(0); transition: none; }
       .${id}-heading {
         font-weight: 700; line-height: 1.15; letter-spacing: -0.02em;
         margin: 0 0 1.2rem 0;
@@ -85,6 +91,8 @@ export function createContentSlide(title, slides, opts = {}) {
         width: 6px; height: 6px;
         background: ${c.textMuted};
       }
+      .${id}-empty-host { padding: 0; }
+      .${id}-empty-host::before { display: none; }
       /* +++ between bullet lists reads as one continuous list, not two. */
       .${id}-block:has(> .${id}-bullets:only-child) + .${id}-block:has(> .${id}-bullets:only-child) > .${id}-bullets {
         margin-top: 0;
@@ -183,14 +191,111 @@ export function createContentSlide(title, slides, opts = {}) {
     return document.createElement('div');
   }
 
+  function stepEndsInBullets(step) {
+    return step.length > 0 && step[step.length - 1].type === 'bullets';
+  }
+
+  // A bullet run starts with any step whose last block is a bullet list and
+  // continues through subsequent single-block bullet steps flagged
+  // `continuation: true` (the author wrote `+++- text`, not `+++\n- text`).
+  // Renders as one <ul> with per-<li> reveal so the list reads as one
+  // continuous structure even when revealed progressively.
+  function bulletRunEnd(slideSteps, startIdx) {
+    let end = startIdx + 1;
+    while (end < slideSteps.length
+           && slideSteps[end].length === 1
+           && slideSteps[end][0].type === 'bullets'
+           && slideSteps[end][0].continuation) {
+      end++;
+    }
+    return end;
+  }
+
+  // Render a run of consecutive bullet-only steps as a single <ul>. Each
+  // <li> carries the step at which it becomes visible, so progressive reveal
+  // works per-item while the list stays structurally and visually continuous
+  // (no gap, no re-nesting, no loss of sub-bullet styling across `+++`).
+  function renderBulletRun(slideSteps, startIdx, endIdx, stepIndex, animated) {
+    const slot = document.createElement('div');
+    slot.className = `${id}-block visible`;
+
+    const root = document.createElement('ul');
+    root.className = `${id}-bullets`;
+    const stack = [root];
+
+    for (let s = startIdx; s < endIdx; s++) {
+      const stepBlocks = slideSteps[s];
+      const block = stepBlocks[stepBlocks.length - 1];
+      for (const it of block.items) {
+        const depth = Math.max(0, it.depth | 0);
+
+        while (stack.length <= depth) {
+          const parent = stack[stack.length - 1];
+          let host = parent.lastElementChild;
+          if (!host || host.tagName !== 'LI') {
+            host = document.createElement('li');
+            host.className = `${id}-empty-host`;
+            parent.appendChild(host);
+          }
+          const sub = document.createElement('ul');
+          sub.className = `${id}-bullets ${id}-bullets-sub`;
+          host.appendChild(sub);
+          stack.push(sub);
+        }
+        while (stack.length > depth + 1) stack.pop();
+
+        const li = document.createElement('li');
+        li.textContent = it.text;
+        const visible = s <= stepIndex;
+        li.className = animated
+          ? `${id}-bullet-item${visible ? ' visible' : ''}`
+          : `${id}-bullet-item${visible ? ' instant' : ''}`;
+        if (animated && visible) {
+          li.style.transitionDelay = `${(s - startIdx) * 80}ms`;
+        }
+        stack[stack.length - 1].appendChild(li);
+      }
+    }
+
+    slot.appendChild(root);
+    return slot;
+  }
+
   // `slideSteps` is Array<Array<Block>>: outer = reveal steps, inner = blocks
   // shown together within that step. By default a slide is one step containing
-  // every block; `+++` in the markdown source splits further.
+  // every block; `+++` in the markdown source splits further. Consecutive
+  // bullet-only steps are collapsed into one <ul> run so sub-bullets read as
+  // part of the same list even when revealed progressively.
   function renderSlide(slideSteps, stepIndex, animated) {
     const wrap = document.createElement('div');
     wrap.className = `${id}-wrap`;
 
-    slideSteps.forEach((stepBlocks, i) => {
+    let i = 0;
+    while (i < slideSteps.length) {
+      const stepBlocks = slideSteps[i];
+      if (stepEndsInBullets(stepBlocks)) {
+        const end = bulletRunEnd(slideSteps, i);
+        if (end > i + 1) {
+          // Non-bullet blocks in this step render as their own slot; the
+          // trailing bullet block joins the run so the first bullet is not
+          // visually segmented from its continuations.
+          if (stepBlocks.length > 1) {
+            const head = document.createElement('div');
+            const visible = i <= stepIndex;
+            head.className = animated
+              ? `${id}-block${visible ? ' visible' : ''}`
+              : `${id}-block${visible ? ' instant' : ''}`;
+            if (animated && visible) head.style.transitionDelay = `${i * 80}ms`;
+            for (let b = 0; b < stepBlocks.length - 1; b++) {
+              head.appendChild(renderBlock(stepBlocks[b]));
+            }
+            wrap.appendChild(head);
+          }
+          wrap.appendChild(renderBulletRun(slideSteps, i, end, stepIndex, animated));
+          i = end;
+          continue;
+        }
+      }
       const slot = document.createElement('div');
       const visible = i <= stepIndex;
       slot.className = animated
@@ -199,7 +304,8 @@ export function createContentSlide(title, slides, opts = {}) {
       if (animated && visible) slot.style.transitionDelay = `${i * 80}ms`;
       for (const block of stepBlocks) slot.appendChild(renderBlock(block));
       wrap.appendChild(slot);
-    });
+      i++;
+    }
 
     contentEl.innerHTML = '';
     contentEl.appendChild(wrap);

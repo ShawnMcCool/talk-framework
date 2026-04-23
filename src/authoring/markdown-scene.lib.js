@@ -129,19 +129,24 @@ function parseSlideBlocks(lines) {
   let i = 0;
 
   const push = (block) => { steps[steps.length - 1].push(block); };
+  const openStep = () => { steps.push([]); };
+
+  // Consume a `+++ ` prefix if present, returning { opensStep, text }.
+  // Kept inline on block content so the block's markdown marker (`#`, `>`,
+  // `-`, etc.) still leads the line — stock markdown editors see a normal
+  // heading / quote / bullet and render correctly.
+  const stripStepPrefix = (text) => {
+    if (/^\+\+\+\s+/.test(text)) {
+      return { opensStep: true, text: text.replace(/^\+\+\+\s+/, '') };
+    }
+    return { opensStep: false, text };
+  };
 
   while (i < lines.length) {
     const line = lines[i];
     const trimmed = line.trim();
 
     if (trimmed === '') { i++; continue; }
-
-    // Step separator
-    if (trimmed === '+++') {
-      steps.push([]);
-      i++;
-      continue;
-    }
 
     // Fenced code
     if (/^```/.test(trimmed)) {
@@ -158,10 +163,12 @@ function parseSlideBlocks(lines) {
       continue;
     }
 
-    // Heading
+    // Heading — `# Text` or `# +++ Text` (the latter opens a new step).
     const h = trimmed.match(/^(#{1,3})\s+(.+)$/);
     if (h) {
-      push({ type: 'heading', text: h[2], level: h[1].length, line: i + 1 });
+      const { opensStep, text } = stripStepPrefix(h[2]);
+      if (opensStep) openStep();
+      push({ type: 'heading', text, level: h[1].length, line: i + 1 });
       i++;
       continue;
     }
@@ -169,21 +176,55 @@ function parseSlideBlocks(lines) {
     // Bullets — one level of nesting per 2 spaces OR per tab. An item's
     // depth is floor((spaces + tabs × 2) / 2); equivalently, tab counts
     // the same as 2 spaces regardless of the editor's tab-display width.
+    //
+    // An item whose text starts with `+++ ` opens a new reveal step at that
+    // bullet. The list stays a contiguous markdown list in source (so stock
+    // editors render it correctly); the parser slices it into groups where
+    // each `+++` item begins a fresh step, and the renderer stitches all
+    // groups back into one <ul> via `continuation: true`.
     if (/^[-*]\s+/.test(trimmed)) {
       const startLine = i + 1;
-      const items = [];
+      const rawItems = [];
       while (i < lines.length && /^[ \t]*[-*]\s+/.test(lines[i])) {
         const m = lines[i].match(/^([ \t]*)[-*]\s+(.*)$/);
         const spaces = m[1].replace(/\t/g, '  ').length;
         const depth = Math.floor(spaces / 2);
-        items.push({ text: m[2], depth });
+        const { opensStep, text } = stripStepPrefix(m[2]);
+        rawItems.push({ text, depth, line: i + 1, opensStep });
         i++;
       }
-      push({ type: 'bullets', items, line: startLine });
+
+      // Group items: a new group starts at every `+++`-prefixed item
+      // (unless the current group is still empty, which happens when the
+      // very first item carries `+++`).
+      const groups = [];
+      let current = { items: [], line: startLine };
+      for (const it of rawItems) {
+        if (it.opensStep && current.items.length > 0) {
+          groups.push(current);
+          current = { items: [], line: it.line };
+        }
+        current.items.push({ text: it.text, depth: it.depth });
+      }
+      if (current.items.length > 0) groups.push(current);
+
+      // The first group joins the current step iff the first item was *not*
+      // a `+++` boundary. Every subsequent group opens a new step and is
+      // flagged `continuation: true` so the renderer collapses the whole
+      // run into one <ul>.
+      const firstOpensStep = rawItems[0].opensStep;
+      for (let gi = 0; gi < groups.length; gi++) {
+        const g = groups[gi];
+        const newStep = firstOpensStep || gi > 0;
+        if (newStep) openStep();
+        const block = { type: 'bullets', items: g.items, line: g.line };
+        if (newStep) block.continuation = true;
+        push(block);
+      }
       continue;
     }
 
-    // Blockquote
+    // Blockquote — `> text` or `> +++ text` (first line opens a new step).
     if (/^>\s?/.test(trimmed)) {
       const startLine = i + 1;
       const qLines = [];
@@ -198,6 +239,13 @@ function parseSlideBlocks(lines) {
         attribution = last.replace(/^(—|--)\s*/, '').trim();
         qLines.pop();
       }
+      let opensStep = false;
+      if (qLines[0]) {
+        const prefix = stripStepPrefix(qLines[0]);
+        opensStep = prefix.opensStep;
+        qLines[0] = prefix.text;
+      }
+      if (opensStep) openStep();
       const block = { type: 'quote', text: qLines.join(' ').trim(), line: startLine };
       if (attribution) block.attribution = attribution;
       push(block);
@@ -214,14 +262,16 @@ function parseSlideBlocks(lines) {
       continue;
     }
 
-    // Paragraph (collect until blank/block boundary)
+    // Paragraph — `+++ text` as the first line opens a new step. A `+++ `
+    // line in the middle of an ongoing paragraph ends the current paragraph
+    // so the next one can claim its own step.
     const startLine = i + 1;
     const pLines = [];
     while (i < lines.length) {
       const l = lines[i];
       const t = l.trim();
       if (t === '') break;
-      if (t === '+++') break;
+      if (pLines.length > 0 && /^\+\+\+\s+/.test(t)) break;
       if (/^(#{1,3})\s+/.test(t)) break;
       if (/^[-*]\s+/.test(t)) break;
       if (/^>\s?/.test(t)) break;
@@ -231,6 +281,9 @@ function parseSlideBlocks(lines) {
       i++;
     }
     let text = pLines.join(' ').trim();
+    const { opensStep, text: stripped } = stripStepPrefix(text);
+    text = stripped;
+    if (opensStep) openStep();
     const muted = text.startsWith('!muted');
     if (muted) text = text.replace(/^!muted\s*/, '');
     const block = { type: 'text', text, line: startLine };
@@ -238,7 +291,7 @@ function parseSlideBlocks(lines) {
     push(block);
   }
 
-  // Drop empty steps (leading, trailing, or back-to-back +++s).
+  // Drop empty steps (an opening `+++` with no prior content produces one).
   return steps.filter(step => step.length > 0);
 }
 

@@ -96,7 +96,7 @@ type: content
 | `subtitle` | string | `section` | Line under the title |
 | `accent` | hex | both | Accent color (rules for section; h2 + bullets for content) |
 | `bg`, `bgDark`, `text` | hex | `section` | Section-slide colors |
-| `fontSize` | CSS size | `section` | Title size (default `"7rem"`) |
+| `fontSize` | CSS size | `section` | Title size (default `"9rem"`) |
 | `letterStagger` | ms (number) | `section` | Letter-in stagger (default `50`) |
 | `colors` | nested map | `content` | Per-scene palette overrides: `colors.accent: "#ff0"` |
 
@@ -104,9 +104,15 @@ type: content
 
 ### Slide and step separators
 
-- `---` on its own line = new slide (ignored inside fenced code blocks)
-- `+++` on its own line = new reveal step within the slide
-- Default: each slide is one step (everything shows at once). Use `+++` only when you want a deliberate reveal.
+- `---` on its own line = new slide (ignored inside fenced code blocks).
+- Default: each slide is one reveal step — everything shows at once. Add a reveal step only when you want a deliberate pause.
+- `+++ ` as a prefix *inside* a block's content opens a new reveal step at that block. The markdown marker comes first so editors still render structure:
+  - heading: `# +++ Title`
+  - bullet: `- +++ item`
+  - quote: `> +++ line`
+  - paragraph: `+++ Text.` (leading `+++ ` on the first line)
+- Code fences, box-diagrams, and `:spacer:` don't take a step prefix — put the `+++ ` on the block before them instead.
+- **Bullets are progressive-list aware**: every `- +++` in a contiguous bullet list opens its own step while the full list renders as one `<ul>`. Bullets without `+++` join the currently-revealing step — so consecutive plain bullets reveal together. Break the list (blank line + new list) if you want a visually separate list.
 
 ### Block syntax (inside a `type: content` slide)
 

@@ -25,10 +25,39 @@ Second slide body.
 - `---` on its own line separates slides. Inside a fenced code block it is
   ignored.
 - A slide is one **reveal step** by default — every block shows at once.
-  `+++` on its own line splits the slide into additional steps; step `N`
-  reveals the blocks between the `N`th and `N+1`th `+++`. Leading, trailing,
-  and consecutive `+++`s are elided. `+++` inside a fenced code block is
-  literal text, not a separator.
+  To split a slide into additional reveal steps, prefix a block's content
+  with `+++ ` (after the markdown marker, so the line still parses as its
+  block type in any editor):
+
+  | Block | Plain | Opens a new reveal step |
+  | --- | --- | --- |
+  | heading | `# Title` | `# +++ Title` |
+  | bullet | `- item` | `- +++ item` |
+  | quote | `> line` | `> +++ line` |
+  | paragraph | `Text.` | `+++ Text.` |
+
+  Fenced code blocks, box-diagrams, and `:spacer:` directives don't take a
+  step prefix. If you need to reveal one of those progressively, put the
+  `+++ ` on whatever block precedes it.
+- **Bullet lists are special**: every `- +++` item inside one contiguous
+  list opens a new step, and bullets without `+++` join the currently-
+  revealing step. The renderer stitches the whole list into a single `<ul>`
+  so the reveal reads as progressive disclosure within one list.
+
+  ```
+  - shown initially
+  - shown initially
+  - +++ revealed on step advance
+  - +++ revealed on the next advance
+  - joins the step above (no +++)
+  - also joins (no +++)
+  ```
+
+  Indent controls nesting the same way as any other bullet (2 spaces or 1
+  tab per level). Break the list (blank line + new list) if you want the
+  next bullets rendered as a *separate* list.
+- A `+++ ` at the very start of a slide is elided — there's nothing before
+  it to require a step advance.
 
 ## Frontmatter keys
 
@@ -41,7 +70,7 @@ Second slide body.
 | `bg` | hex | `section` | Outer background. |
 | `bgDark` | hex | `section` | Center of the radial background gradient. |
 | `text` | hex | `section` | Title text color. |
-| `fontSize` | CSS size | `section` | Title size (default `"7rem"`). |
+| `fontSize` | CSS size | `section` | Title size (default `"9rem"`). |
 | `letterStagger` | number (ms) | `section` | Delay between letter-in animations (default `50`). |
 | `colors` | nested map | `content` | Per-scene palette overrides (`colors.accent: "#ff0"`). |
 

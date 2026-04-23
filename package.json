@@ -1,6 +1,6 @@
 {
   "name": "talk-framework",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "A reusable presentation framework. Author decks as free-standing folders of markdown (and optional JS) scenes; the framework renders them via Three.js + Vite.",
   "keywords": [
     "presentation",

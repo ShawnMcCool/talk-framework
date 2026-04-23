@@ -18,7 +18,6 @@ function fetchUser(id) {
   return db.query('SELECT id, email, display_name FROM users WHERE id = ?', [id]);
 }
 ```
-+++
 
-> The best code reviews feel like a pair of eyes reading alongside you, not a gate checking whether you deserve to merge.
+> +++ The best code reviews feel like a pair of eyes reading alongside you, not a gate checking whether you deserve to merge.
 > — internal team retro, 2024

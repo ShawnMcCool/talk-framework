@@ -74,9 +74,12 @@ title: Empty
   });
 });
 
-// Each slide is now Array<Array<Block>> — outer = reveal steps, inner = blocks
-// shown together. Default is ONE step containing every block; `+++` on its
-// own line splits the slide into additional steps.
+// Each slide is Array<Array<Block>> — outer = reveal steps, inner = blocks
+// shown together. Default is ONE step containing every block. A `+++ `
+// prefix *inside* a block (after the markdown marker — `# +++ h`, `> +++ q`,
+// `- +++ b`, or leading a paragraph) opens a new reveal step at that block,
+// so the source stays valid markdown for editors that don't know about
+// reveal steps.
 describe('parseSlideBody', () => {
   it('splits slides on --- lines', () => {
     const body = `# Slide 1
@@ -165,6 +168,56 @@ describe('parseSlideBody', () => {
     ]);
   });
 
+  it('`- +++ text` inside a bullet list opens a new step at that item', () => {
+    const slides = parseSlideBody('- alpha\n- +++ beta\n- +++ gamma');
+    assert.equal(slides[0].length, 3);
+    assert.deepEqual(slides[0][0][0], {
+      type: 'bullets', items: [{ text: 'alpha', depth: 0 }], line: 1,
+    });
+    assert.deepEqual(slides[0][1][0], {
+      type: 'bullets', items: [{ text: 'beta', depth: 0 }], line: 2, continuation: true,
+    });
+    assert.deepEqual(slides[0][2][0], {
+      type: 'bullets', items: [{ text: 'gamma', depth: 0 }], line: 3, continuation: true,
+    });
+  });
+
+  it('bullets without `+++` after a `+++` bullet stay in that step', () => {
+    const slides = parseSlideBody('- a\n- +++ b\n- c\n- d\n- +++ e');
+    // Step 0 = [a], step 1 = [b, c, d], step 2 = [e]
+    assert.equal(slides[0].length, 3);
+    assert.deepEqual(slides[0][0][0].items, [{ text: 'a', depth: 0 }]);
+    assert.deepEqual(slides[0][1][0].items, [
+      { text: 'b', depth: 0 },
+      { text: 'c', depth: 0 },
+      { text: 'd', depth: 0 },
+    ]);
+    assert.equal(slides[0][1][0].continuation, true);
+    assert.deepEqual(slides[0][2][0].items, [{ text: 'e', depth: 0 }]);
+    assert.equal(slides[0][2][0].continuation, true);
+  });
+
+  it('`- +++ text` as the very first bullet opens a new step for the run', () => {
+    const slides = parseSlideBody('# H\n\n- +++ a\n- +++ b');
+    // Step 0 = heading; step 1 = [a]; step 2 = [b].
+    assert.equal(slides[0].length, 3);
+    assert.equal(slides[0][0][0].type, 'heading');
+    assert.deepEqual(slides[0][1][0].items, [{ text: 'a', depth: 0 }]);
+    assert.equal(slides[0][1][0].continuation, true);
+    assert.deepEqual(slides[0][2][0].items, [{ text: 'b', depth: 0 }]);
+    assert.equal(slides[0][2][0].continuation, true);
+  });
+
+  it('nested bullets after a `+++` item inherit the step', () => {
+    const slides = parseSlideBody('- a\n- +++ parent\n  - child');
+    assert.equal(slides[0].length, 2);
+    assert.deepEqual(slides[0][1][0].items, [
+      { text: 'parent', depth: 0 },
+      { text: 'child', depth: 1 },
+    ]);
+    assert.equal(slides[0][1][0].continuation, true);
+  });
+
   it('parses a blockquote', () => {
     const slides = parseSlideBody('> Make it work.');
     assert.deepEqual(slides[0][0][0], { type: 'quote', text: 'Make it work.', line: 1 });
@@ -228,22 +281,44 @@ describe('parseSlideBody', () => {
     assert.equal(slides[0][0][2].type, 'text');
   });
 
-  it('splits a slide into steps at +++ lines', () => {
-    const slides = parseSlideBody('# Heading\n\n+++\n\n- a\n- b\n\n+++\n\nparagraph');
-    assert.equal(slides[0].length, 3);
-    assert.equal(slides[0][0][0].type, 'heading');
-    assert.equal(slides[0][1][0].type, 'bullets');
-    assert.equal(slides[0][2][0].type, 'text');
-  });
-
-  it('drops leading, trailing, and consecutive +++ separators', () => {
-    const slides = parseSlideBody('+++\n\n# A\n\n+++\n+++\n\n# B\n\n+++');
+  it('`# +++ Text` opens a new reveal step for a heading', () => {
+    const slides = parseSlideBody('# Intro\n\n## +++ Next');
     assert.equal(slides[0].length, 2);
-    assert.equal(slides[0][0][0].text, 'A');
-    assert.equal(slides[0][1][0].text, 'B');
+    assert.equal(slides[0][0][0].text, 'Intro');
+    assert.equal(slides[0][1][0].type, 'heading');
+    assert.equal(slides[0][1][0].level, 2);
+    assert.equal(slides[0][1][0].text, 'Next');
   });
 
-  it('ignores +++ inside a fenced code block', () => {
+  it('`> +++ quote` opens a new reveal step for a quote', () => {
+    const slides = parseSlideBody('# Heading\n\n> +++ stirring words\n> — me');
+    assert.equal(slides[0].length, 2);
+    assert.equal(slides[0][1][0].type, 'quote');
+    assert.equal(slides[0][1][0].text, 'stirring words');
+    assert.equal(slides[0][1][0].attribution, 'me');
+  });
+
+  it('`+++ paragraph` opens a new reveal step for a paragraph', () => {
+    const slides = parseSlideBody('First para.\n\n+++ Second para shows later.');
+    assert.equal(slides[0].length, 2);
+    assert.equal(slides[0][0][0].text, 'First para.');
+    assert.equal(slides[0][1][0].text, 'Second para shows later.');
+  });
+
+  it('a `+++ ` line mid-paragraph ends the previous paragraph and starts a new step', () => {
+    const slides = parseSlideBody('Line one.\n+++ Line two.');
+    assert.equal(slides[0].length, 2);
+    assert.equal(slides[0][0][0].text, 'Line one.');
+    assert.equal(slides[0][1][0].text, 'Line two.');
+  });
+
+  it('`+++` as the first block of a slide emits a single non-empty step', () => {
+    const slides = parseSlideBody('# +++ Only heading');
+    assert.equal(slides[0].length, 1);
+    assert.equal(slides[0][0][0].text, 'Only heading');
+  });
+
+  it('ignores `+++` inside a fenced code block', () => {
     const slides = parseSlideBody('```\nbefore\n+++\nafter\n```');
     assert.equal(slides[0].length, 1);
     assert.equal(slides[0][0][0].type, 'code');
