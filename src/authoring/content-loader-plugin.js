@@ -22,6 +22,20 @@ import { walkSceneDiagnostics } from './scene-diagnostics.lib.js';
 const VIRTUAL_ID = 'virtual:content-manifest';
 const RESOLVED_ID = '\0' + VIRTUAL_ID;
 
+const IMAGE_EXTENSIONS = new Set([
+  '.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg', '.avif',
+]);
+
+const IMAGE_MIME = {
+  '.png':  'image/png',
+  '.jpg':  'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.gif':  'image/gif',
+  '.webp': 'image/webp',
+  '.svg':  'image/svg+xml',
+  '.avif': 'image/avif',
+};
+
 export function contentLoaderPlugin(options = {}) {
   const contentRoot = options.contentRoot || '/content';
 
@@ -34,6 +48,30 @@ export function contentLoaderPlugin(options = {}) {
       } catch {
         // Watcher errors are non-fatal — polling in the container catches changes anyway.
       }
+
+      // Serve /content/<rel> URLs from the on-disk content folder. Image
+      // tags reference these URLs from compiled scenes; without this
+      // middleware Vite would 404 because contentRoot is typically outside
+      // the project root.
+      server.middlewares.use((req, res, next) => {
+        if (!req.url || !req.url.startsWith('/content/')) return next();
+        const urlPath = req.url.split('?')[0];
+        const rel = decodeURIComponent(urlPath.slice('/content/'.length));
+        if (rel === '' || rel.includes('..')) return next();
+        const ext = path.extname(rel).toLowerCase();
+        if (!IMAGE_EXTENSIONS.has(ext)) return next();
+        const filePath = path.join(contentRoot, rel);
+        if (!fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) return next();
+        try {
+          const data = fs.readFileSync(filePath);
+          res.setHeader('Content-Type', IMAGE_MIME[ext] || 'application/octet-stream');
+          res.setHeader('Cache-Control', 'no-cache');
+          res.end(data);
+        } catch (err) {
+          next(err);
+        }
+      });
+
       server.watcher.on('all', (event, changed) => {
         if (!changed || !changed.startsWith(contentRoot)) return;
         const mod = server.moduleGraph.getModuleById(RESOLVED_ID);
@@ -69,7 +107,47 @@ export function contentLoaderPlugin(options = {}) {
       if (id !== RESOLVED_ID) return null;
       return buildManifestModule(contentRoot);
     },
+
+    // Copy the content folder's image assets into dist/content/ so the
+    // deployed bundle can serve them at the same `/content/<rel>` URLs the
+    // dev middleware serves. Only image files are copied — markdown and JS
+    // sources are inlined into the bundle by the manifest's import lines
+    // and don't need to ship as static assets.
+    closeBundle() {
+      const outDir = (this.environment && this.environment.config && this.environment.config.build && this.environment.config.build.outDir)
+        || 'dist';
+      copyImageAssets(contentRoot, path.join(outDir, 'content'));
+    },
   };
+}
+
+function copyImageAssets(srcRoot, destRoot) {
+  if (!fs.existsSync(srcRoot)) return;
+  const stack = [''];
+  while (stack.length > 0) {
+    const rel = stack.pop();
+    const srcDir = rel === '' ? srcRoot : path.join(srcRoot, rel);
+    let entries;
+    try {
+      entries = fs.readdirSync(srcDir, { withFileTypes: true });
+    } catch {
+      continue;
+    }
+    for (const entry of entries) {
+      const subRel = rel === '' ? entry.name : path.join(rel, entry.name);
+      if (entry.isDirectory()) {
+        stack.push(subRel);
+        continue;
+      }
+      if (!entry.isFile()) continue;
+      const ext = path.extname(entry.name).toLowerCase();
+      if (!IMAGE_EXTENSIONS.has(ext)) continue;
+      const srcPath = path.join(srcDir, entry.name);
+      const destPath = path.join(destRoot, subRel);
+      fs.mkdirSync(path.dirname(destPath), { recursive: true });
+      fs.copyFileSync(srcPath, destPath);
+    }
+  }
 }
 
 function buildManifestModule(contentRoot) {
@@ -93,11 +171,15 @@ function buildManifestModule(contentRoot) {
   const entries = listEntries(contentRoot);
   const { scenes, issues } = discoverScenes(entries);
 
-  // Build dynamic imports for each scene's source file.
+  // Build dynamic imports for each scene's source file. Use the actual
+  // content-root path so the imports resolve in both dev (where contentRoot
+  // is typically /content via Docker bind-mount) and production builds
+  // (where CONTENT_DIR points anywhere on disk and Rollup needs a real
+  // filesystem path to traverse).
   const sceneImports = scenes.map((s, i) => {
-    const src = s.kind === 'md'
-      ? `/content/${s.folder}/scene.md?raw`
-      : `/content/${s.folder}/scene.js`;
+    const file = s.kind === 'md' ? 'scene.md' : 'scene.js';
+    const abs = path.join(contentRoot, s.folder, file);
+    const src = s.kind === 'md' ? `${abs}?raw` : abs;
     return { ...s, importPath: src, importIdent: `__scene_${i}` };
   });
 

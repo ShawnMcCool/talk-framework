@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 360" role="img" aria-label="Card two: ask">
+  <defs>
+    <linearGradient id="g2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1f2a55"/>
+      <stop offset="100%" stop-color="#0f1a35"/>
+    </linearGradient>
+  </defs>
+  <rect width="480" height="360" rx="20" fill="url(#g2)" stroke="#44bbff" stroke-width="3"/>
+  <text x="240" y="92" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" font-weight="600" fill="#44bbff" text-anchor="middle" letter-spacing="6">STEP 2</text>
+  <text x="240" y="180" font-family="ui-sans-serif, system-ui, sans-serif" font-size="44" font-weight="700" fill="#e8e8f8" text-anchor="middle">Ask</text>
+  <text x="240" y="232" font-family="ui-sans-serif, system-ui, sans-serif" font-size="18" fill="#99aacc" text-anchor="middle">questions, not prescriptions</text>
+  <g transform="translate(220,288)">
+    <circle r="6" fill="#44bbff"/>
+    <circle r="6" cx="20" fill="#44bbff"/>
+    <circle r="6" cx="40" fill="#1f2a55" stroke="#44bbff" stroke-width="2"/>
+  </g>
+</svg>

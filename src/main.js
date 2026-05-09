@@ -65,7 +65,11 @@ function buildSceneSources() {
       let entry;
       if (s.kind === 'md') {
         entry = {
-          scene: compileMarkdownScene(s.source, { palette: config?.palette }),
+          scene: compileMarkdownScene(s.source, {
+            palette: config?.palette,
+            sceneFolder: s.folder,
+            baseUrl: import.meta.env?.BASE_URL ?? '/',
+          }),
           path: `/content/${s.folder}/scene.md`,
           folder: s.folder,
         };

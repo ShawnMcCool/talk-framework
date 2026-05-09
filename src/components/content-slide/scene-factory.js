@@ -20,6 +20,8 @@ let instanceCounter = 0;
 export function createContentSlide(title, slides, opts = {}) {
   const id = `cs-${instanceCounter++}`;
   const c = { ...defaultColors, ...opts.colors };
+  const sceneFolder = opts.sceneFolder || '';
+  const baseUrl = opts.baseUrl ?? '/';
 
   let renderer = null;
   let container = null;
@@ -152,11 +154,39 @@ export function createContentSlide(title, slides, opts = {}) {
       }
       .${id}-spacer { height: 1rem; }
       .${id}-spacer[data-size="lg"] { height: 2rem; }
+      .${id}-image-row {
+        display: flex; justify-content: center; align-items: center;
+        gap: 2rem; margin: 0 0 1.2rem 0;
+        max-width: 100%; max-height: 100%;
+      }
+      .${id}-image-row[data-count="1"] {
+        justify-content: center;
+      }
+      .${id}-image-row[data-count="1"] .${id}-image-item {
+        max-width: 70%; max-height: 100%;
+        width: auto; height: auto;
+        object-fit: contain;
+      }
+      .${id}-image-row:not([data-count="1"]) .${id}-image-item {
+        flex: 1 1 0; min-width: 0;
+        max-height: 100%;
+        object-fit: contain;
+      }
+      .${id}-image-item.hidden {
+        opacity: 0;
+      }
+      .${id}-image-item.visible {
+        opacity: 1;
+        transition: opacity 0.4s ease-out;
+      }
+      .${id}-image-item.instant {
+        opacity: 1; transition: none;
+      }
     `;
     container.appendChild(style);
   }
 
-  function renderBlock(block) {
+  function renderBlock(block, extraContext = {}) {
     // 1. Columns are a content-slide-native compositional primitive (not a
     //    registered component). Handle inline.
     if (block.type === 'columns') {
@@ -164,19 +194,27 @@ export function createContentSlide(title, slides, opts = {}) {
       wrap.className = `${id}-columns`;
       const left = document.createElement('div');
       const right = document.createElement('div');
-      for (const b of (block.left || [])) left.appendChild(renderBlock(b));
-      for (const b of (block.right || [])) right.appendChild(renderBlock(b));
+      for (const b of (block.left || [])) left.appendChild(renderBlock(b, extraContext));
+      for (const b of (block.right || [])) right.appendChild(renderBlock(b, extraContext));
       wrap.appendChild(left);
       wrap.appendChild(right);
       return wrap;
     }
+
+    const renderContext = {
+      classPrefix: id,
+      colors: c,
+      sceneFolder,
+      baseUrl,
+      ...extraContext,
+    };
 
     // 2. Fenced code with a recognized info-string → custom markdown-block.
     if (block.type === 'code' && block.language) {
       const custom = registry.getByInfoString(block.language);
       if (custom && custom.render) {
         const parsed = custom.parse ? custom.parse(block.code, { file: null, blockStartLine: 0 }) : block.code;
-        return custom.render(parsed, { classPrefix: id, colors: c });
+        return custom.render(parsed, renderContext);
       }
     }
 
@@ -184,7 +222,7 @@ export function createContentSlide(title, slides, opts = {}) {
     const builtin = registry.getByBlockType(block.type);
     if (builtin && builtin.render) {
       const parsed = builtin.parse ? builtin.parse(block) : block;
-      return builtin.render(parsed, { classPrefix: id, colors: c });
+      return builtin.render(parsed, renderContext);
     }
 
     // 4. Unknown: empty div (keeps the deck renderable; linter will flag).
@@ -193,6 +231,47 @@ export function createContentSlide(title, slides, opts = {}) {
 
   function stepEndsInBullets(step) {
     return step.length > 0 && step[step.length - 1].type === 'bullets';
+  }
+
+  function isSoloImageRowStep(step) {
+    return step.length === 1 && step[0].type === 'image-row';
+  }
+
+  // Find the end (exclusive) of a contiguous run of solo-image-row steps
+  // starting at startIdx. Used to merge `+++`-separated image-only paragraphs
+  // into one <figure> with per-image step-gated visibility.
+  function imageRunEnd(slideSteps, startIdx) {
+    let end = startIdx + 1;
+    while (end < slideSteps.length && isSoloImageRowStep(slideSteps[end])) {
+      end++;
+    }
+    return end;
+  }
+
+  // Render a run of consecutive solo-image-row steps as a single <figure>.
+  // Each step contributes its image(s) to the merged row, tagged with the
+  // step at which they should become visible. The figure is wrapped in a
+  // `${id}-block` slot that's always-visible; visibility within the figure
+  // is per-<img> via `data-visible-from-step` and the renderer's class
+  // toggles. This gives the "build a row left-to-right" UX without
+  // disturbing the slot's geometry between reveals.
+  function renderImageRun(slideSteps, startIdx, endIdx, stepIndex, animated) {
+    const slot = document.createElement('div');
+    slot.className = `${id}-block visible`;
+
+    const merged = [];
+    for (let s = startIdx; s < endIdx; s++) {
+      const block = slideSteps[s][0];
+      for (const image of block.images) {
+        merged.push({ ...image, visibleFromStep: s });
+      }
+    }
+    const mergedBlock = { type: 'image-row', images: merged };
+    slot.appendChild(renderBlock(mergedBlock, {
+      currentStep: stepIndex,
+      animated,
+    }));
+    return slot;
   }
 
   // A bullet run starts with any step whose last block is a bullet list and
@@ -273,6 +352,12 @@ export function createContentSlide(title, slides, opts = {}) {
     let i = 0;
     while (i < slideSteps.length) {
       const stepBlocks = slideSteps[i];
+      if (isSoloImageRowStep(stepBlocks)) {
+        const end = imageRunEnd(slideSteps, i);
+        wrap.appendChild(renderImageRun(slideSteps, i, end, stepIndex, animated));
+        i = end;
+        continue;
+      }
       if (stepEndsInBullets(stepBlocks)) {
         const end = bulletRunEnd(slideSteps, i);
         if (end > i + 1) {

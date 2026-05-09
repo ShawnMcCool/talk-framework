@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 360" role="img" aria-label="Card one: read it">
+  <defs>
+    <linearGradient id="g1" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1f2a55"/>
+      <stop offset="100%" stop-color="#0f1a35"/>
+    </linearGradient>
+  </defs>
+  <rect width="480" height="360" rx="20" fill="url(#g1)" stroke="#aaccff" stroke-width="3"/>
+  <text x="240" y="92" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" font-weight="600" fill="#aaccff" text-anchor="middle" letter-spacing="6">STEP 1</text>
+  <text x="240" y="180" font-family="ui-sans-serif, system-ui, sans-serif" font-size="44" font-weight="700" fill="#e8e8f8" text-anchor="middle">Read it</text>
+  <text x="240" y="232" font-family="ui-sans-serif, system-ui, sans-serif" font-size="18" fill="#99aacc" text-anchor="middle">whole change, top to bottom</text>
+  <g transform="translate(240,288)">
+    <circle r="6" fill="#aaccff"/>
+    <circle r="6" cx="20" fill="#1f2a55" stroke="#aaccff" stroke-width="2"/>
+    <circle r="6" cx="40" fill="#1f2a55" stroke="#aaccff" stroke-width="2"/>
+  </g>
+</svg>

@@ -467,6 +467,63 @@ describe('resolveSceneOptions (palette merge)', () => {
   });
 });
 
+describe('image-row blocks', () => {
+  it('emits image-row for a single image-only paragraph', () => {
+    const { slides } = parseMarkdownScene(`---\ntitle: T\n---\n\n![alt](cat.png)\n`);
+    assert.equal(slides.length, 1);
+    assert.equal(slides[0].length, 1);
+    assert.equal(slides[0][0].length, 1);
+    const block = slides[0][0][0];
+    assert.equal(block.type, 'image-row');
+    assert.deepEqual(block.images, [{ alt: 'alt', src: 'cat.png' }]);
+    assert.equal(block.continuation, undefined);
+  });
+
+  it('emits a single image-row for a multi-image paragraph (auto-row)', () => {
+    const { slides } = parseMarkdownScene(
+      `---\ntitle: T\n---\n\n![](a.png)\n![](b.png)\n![](c.png)\n`,
+    );
+    const block = slides[0][0][0];
+    assert.equal(block.type, 'image-row');
+    assert.equal(block.images.length, 3);
+    assert.equal(block.images[2].src, 'c.png');
+  });
+
+  it('flags continuation across `+++ ` step boundaries between image-only paragraphs', () => {
+    const { slides } = parseMarkdownScene(
+      `---\ntitle: T\n---\n\n![](a.png)\n+++ ![](b.png)\n+++ ![](c.png)\n`,
+    );
+    const steps = slides[0];
+    assert.equal(steps.length, 3);
+    assert.equal(steps[0][0].type, 'image-row');
+    assert.equal(steps[0][0].continuation, undefined);
+    assert.equal(steps[1][0].type, 'image-row');
+    assert.equal(steps[1][0].continuation, true);
+    assert.equal(steps[2][0].type, 'image-row');
+    assert.equal(steps[2][0].continuation, true);
+  });
+
+  it('does not flag continuation when previous step has multiple blocks', () => {
+    const { slides } = parseMarkdownScene(
+      `---\ntitle: T\n---\n\n# heading\n\n![](a.png)\n+++ ![](b.png)\n`,
+    );
+    const steps = slides[0];
+    // Step 0: heading + image-row. Step 1: image-row.
+    assert.equal(steps[0].length, 2);
+    assert.equal(steps[1].length, 1);
+    assert.equal(steps[1][0].type, 'image-row');
+    assert.equal(steps[1][0].continuation, undefined);
+  });
+
+  it('keeps mixed prose+image as a regular text block', () => {
+    const { slides } = parseMarkdownScene(
+      `---\ntitle: T\n---\n\nLook at this ![](a.png) right here.\n`,
+    );
+    const block = slides[0][0][0];
+    assert.equal(block.type, 'text');
+  });
+});
+
 describe('parseSlideBlocks line numbers', () => {
   it('attaches line numbers to each block', () => {
     const src = `---
