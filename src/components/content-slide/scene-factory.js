@@ -22,6 +22,7 @@ export function createContentSlide(title, slides, opts = {}) {
   const c = { ...defaultColors, ...opts.colors };
   const sceneFolder = opts.sceneFolder || '';
   const baseUrl = opts.baseUrl ?? '/';
+  const imageDimensions = opts.imageDimensions || {};
 
   let renderer = null;
   let container = null;
@@ -206,6 +207,7 @@ export function createContentSlide(title, slides, opts = {}) {
       colors: c,
       sceneFolder,
       baseUrl,
+      imageDimensions,
       ...extraContext,
     };
 

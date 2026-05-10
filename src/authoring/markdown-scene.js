@@ -19,17 +19,17 @@ import { colors as defaultColors } from '../shared/colors.js';
  * environments where they aren't known (tests, SSR previews).
  *
  * @param {string} source
- * @param {{ palette?: Record<string, string>, sceneFolder?: string, baseUrl?: string }} [opts]
+ * @param {{ palette?: Record<string, string>, sceneFolder?: string, baseUrl?: string, imageDimensions?: Record<string, { width: number, height: number }> }} [opts]
  * @returns {import('../types.js').SceneModule}
  */
-export function compileMarkdownScene(source, { palette = {}, sceneFolder = '', baseUrl = '/' } = {}) {
+export function compileMarkdownScene(source, { palette = {}, sceneFolder = '', baseUrl = '/', imageDimensions = {} } = {}) {
   const deckColors = { ...defaultColors, ...palette };
   const parsed = parseMarkdownScene(source, deckColors);
   const { kind, title, factoryArgs } = resolveSceneOptions(parsed, palette);
 
   switch (kind) {
     case 'section': return createSectionSlide(title, factoryArgs);
-    case 'content': return createContentSlide(title, parsed.slides, { ...factoryArgs, sceneFolder, baseUrl });
+    case 'content': return createContentSlide(title, parsed.slides, { ...factoryArgs, sceneFolder, baseUrl, imageDimensions });
     default: throw new Error(`markdown scene: unknown kind "${kind}"`);
   }
 }

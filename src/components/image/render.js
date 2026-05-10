@@ -34,11 +34,22 @@ export function renderImageBlock(data, renderContext) {
     : Infinity;
   const animated = renderContext.animated === true;
 
+  const imageDimensions = renderContext.imageDimensions || {};
+
   for (const image of data.images) {
     const img = document.createElement('img');
     img.src = resolveImageUrl(image.src, sceneFolder, baseUrl);
     img.alt = image.alt || '';
     img.className = `${id}-image-item`;
+
+    // HTML width/height attrs let the browser compute the implicit
+    // aspect ratio before decode, so the figure reserves a correctly-
+    // shaped slot from first paint instead of expanding from 0×0.
+    const dims = imageDimensions[image.src];
+    if (dims) {
+      img.setAttribute('width', String(dims.width));
+      img.setAttribute('height', String(dims.height));
+    }
 
     const hasStepGate = Number.isFinite(image.visibleFromStep);
     const stepVisible = !hasStepGate || image.visibleFromStep <= currentStep;

@@ -18,6 +18,7 @@ import { validateTalkConfig } from './talk-config.lib.js';
 import { parseMarkdownScene } from './markdown-scene.lib.js';
 import { registry } from './component-registry.js';
 import { walkSceneDiagnostics } from './scene-diagnostics.lib.js';
+import { parseSvgDimensions } from './svg-dimensions.lib.js';
 
 const VIRTUAL_ID = 'virtual:content-manifest';
 const RESOLVED_ID = '\0' + VIRTUAL_ID;
@@ -180,7 +181,10 @@ function buildManifestModule(contentRoot) {
     const file = s.kind === 'md' ? 'scene.md' : 'scene.js';
     const abs = path.join(contentRoot, s.folder, file);
     const src = s.kind === 'md' ? `${abs}?raw` : abs;
-    return { ...s, importPath: src, importIdent: `__scene_${i}` };
+    const imageDimensions = s.kind === 'md'
+      ? collectSceneImageDimensions(contentRoot, s.folder, abs)
+      : {};
+    return { ...s, importPath: src, importIdent: `__scene_${i}`, imageDimensions };
   });
 
   const importLines = sceneImports.map(s =>
@@ -195,6 +199,7 @@ function buildManifestModule(contentRoot) {
     folder: ${JSON.stringify(s.folder)},
     kind: ${JSON.stringify(s.kind)},
     source: ${s.importIdent},
+    imageDimensions: ${JSON.stringify(s.imageDimensions)},
   }`).join(',\n');
 
   return `${importLines}
@@ -224,6 +229,47 @@ function listEntries(dir) {
     }
     return { name: d.name, isDirectory, hasSceneMd, hasSceneJs };
   });
+}
+
+// Walk a markdown scene's source for `![alt](src)` references and resolve
+// each `.svg` ref to its file dimensions via `parseSvgDimensions`. Returns
+// a map keyed by the raw markdown `src` (matching `image.src` in parsed
+// blocks) to `{ width, height }`. Missing files, non-SVG refs, and
+// parse failures are silently skipped — the renderer falls back to its
+// previous behaviour and the figure can still load (just without the
+// pre-decode aspect-ratio reservation).
+const IMAGE_REF_RE = /!\[[^\]]*\]\(([^)\s]+)\)/g;
+
+function collectSceneImageDimensions(contentRoot, sceneFolder, sceneMdPath) {
+  const out = {};
+  let source;
+  try {
+    source = fs.readFileSync(sceneMdPath, 'utf8');
+  } catch {
+    return out;
+  }
+
+  for (const m of source.matchAll(IMAGE_REF_RE)) {
+    const src = m[1];
+    if (out[src] !== undefined) continue;
+    if (!src.toLowerCase().endsWith('.svg')) continue;
+
+    const filePath = src.startsWith('/')
+      ? path.join(contentRoot, src.slice(1))
+      : path.join(contentRoot, sceneFolder, src);
+
+    let svgText;
+    try {
+      svgText = fs.readFileSync(filePath, 'utf8');
+    } catch {
+      continue;
+    }
+
+    const dims = parseSvgDimensions(svgText);
+    if (dims) out[src] = dims;
+  }
+
+  return out;
 }
 
 /**

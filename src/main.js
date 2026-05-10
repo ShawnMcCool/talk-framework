@@ -72,6 +72,7 @@ function buildSceneSources() {
             palette: config?.palette,
             sceneFolder: s.folder,
             baseUrl: import.meta.env?.BASE_URL ?? '/',
+            imageDimensions: s.imageDimensions || {},
           }),
           path: `/content/${s.folder}/scene.md`,
           folder: s.folder,
