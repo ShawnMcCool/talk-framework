@@ -39,17 +39,28 @@ export function renderImageBlock(data, renderContext) {
     img.src = resolveImageUrl(image.src, sceneFolder, baseUrl);
     img.alt = image.alt || '';
     img.className = `${id}-image-item`;
-    if (Number.isFinite(image.visibleFromStep)) {
-      img.dataset.visibleFromStep = String(image.visibleFromStep);
-      const visible = image.visibleFromStep <= currentStep;
-      img.classList.add(animated
-        ? (visible ? 'visible' : 'hidden')
-        : (visible ? 'instant' : 'hidden'));
-      if (animated && visible) {
+
+    const hasStepGate = Number.isFinite(image.visibleFromStep);
+    const stepVisible = !hasStepGate || image.visibleFromStep <= currentStep;
+    if (hasStepGate) img.dataset.visibleFromStep = String(image.visibleFromStep);
+
+    // Start hidden in every case so the slot doesn't render with a half-loaded
+    // bitmap. Reveal once the image has decoded AND the step gate is satisfied.
+    img.classList.add('hidden');
+
+    const reveal = () => {
+      if (!stepVisible) return;
+      img.classList.remove('hidden');
+      img.classList.add(animated ? 'visible' : 'instant');
+      if (animated && hasStepGate) {
         const delay = Math.max(0, image.visibleFromStep) * 80;
         img.style.transitionDelay = `${delay}ms`;
       }
-    }
+    };
+
+    if (img.complete && img.naturalWidth > 0) reveal();
+    else img.addEventListener('load', reveal, { once: true });
+
     figure.appendChild(img);
   }
 

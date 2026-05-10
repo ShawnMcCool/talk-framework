@@ -4,15 +4,20 @@
 // bundle would pull it into every consumer of the component registry —
 // including `talk lint`, which runs in Node without DOM or browser deps.
 //
-// First call to `renderCodeFence` with a language starts the import; the
-// module cache makes subsequent calls synchronous. The DOM node returns
-// immediately; highlighting paints in after hljs resolves.
+// Once the bundle has resolved, `hljsCached` lets `renderCodeFence` highlight
+// inline before returning — so the first paint of the new scene already has
+// coloured tokens. Only the very first code block of the session falls back
+// to the deferred `.then(...)` path.
 
 let hljsPromise = null;
+let hljsCached = null;
 
 function loadHljs() {
   if (!hljsPromise) {
-    hljsPromise = import('./highlight.js').then((m) => m.hljs);
+    hljsPromise = import('./highlight.js').then((m) => {
+      hljsCached = m.hljs;
+      return m.hljs;
+    });
   }
   return hljsPromise;
 }
@@ -47,12 +52,19 @@ export function renderCodeFence(data, renderContext) {
   wrap.appendChild(pre);
 
   if (data.language) {
-    loadHljs().then((hljs) => {
-      if (hljs.getLanguage(data.language)) {
+    if (hljsCached) {
+      if (hljsCached.getLanguage(data.language)) {
         code.className = `language-${data.language} hljs`;
-        hljs.highlightElement(code);
+        hljsCached.highlightElement(code);
       }
-    });
+    } else {
+      loadHljs().then((hljs) => {
+        if (hljs.getLanguage(data.language)) {
+          code.className = `language-${data.language} hljs`;
+          hljs.highlightElement(code);
+        }
+      });
+    }
   }
 
   return wrap;
