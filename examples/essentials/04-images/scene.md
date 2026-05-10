@@ -3,6 +3,10 @@ title: Images
 type: content
 ---
 
+:spacer:
+
+---
+
 ## Drop in a single image
 
 ![A simple system: client, API, database](hero.svg)

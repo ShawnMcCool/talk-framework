@@ -3,6 +3,10 @@ title: In practice
 type: content
 ---
 
+:spacer:
+
+---
+
 ## In practice
 
 A good comment starts from the code, not from the reviewer's preferences:
