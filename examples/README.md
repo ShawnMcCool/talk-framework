@@ -16,11 +16,13 @@ The dev server starts on http://localhost:3000. Use the arrow keys to step throu
 
 | Deck | Components shown | Run |
 |------|-----------------|-----|
-| `essentials/` | content-slide, section-slide, heading, paragraph, bullet-list, quote, code-fence, spacer | `talk serve examples/essentials/` |
+| `essentials/` | feature tour — every registered component in one deck: title-animation, content + section-slide, heading, paragraph, bullet-list, quote, code-fence, spacer, image, box-diagram, 3d-scene, svg-scene | `talk serve examples/essentials/` |
 | `box-diagrams/` | box-diagram (simple flow, section header, roles + subtitles) | `talk serve examples/box-diagrams/` |
 | `3d-scene/` | 3d-scene (JS factory — rotating cube with step-driven state) | `talk serve examples/3d-scene/` |
 | `svg-scene/` | svg-scene (JS factory — memory-hierarchy bar chart drawn to scale) | `talk serve examples/svg-scene/` |
 | `title-animation/` | title-animation (JS factory — typewriter variant) | `talk serve examples/title-animation/` |
+
+`essentials/` is the broad showcase — start there to see what the framework can do. The other decks are focused minimum-viable references for one component each, useful when you want to copy-paste the smallest possible setup.
 
 ## Lint checks
 
