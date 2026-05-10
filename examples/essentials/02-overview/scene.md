@@ -15,4 +15,4 @@ This deck steps through every component the framework ships, in roughly the orde
 - +++ 3D scenes and SVG data viz
 - +++ All composed in one deck
 
-!muted Use the arrow keys to step through. `Escape` opens the command palette.
++++ !muted Use the arrow keys to step through. `Escape` opens the command palette.
