@@ -23,6 +23,13 @@ export function createEngine({ stage, sceneDefs, onPositionChange = null }) {
       currentSceneModule.destroy(currentSceneCtx);
       currentSceneModule = null;
       currentSceneCtx = null;
+      // The destroyed scene cannot still be animating, and its animateToSlide
+      // chain may have been interrupted before its done() callback fired.
+      // Without this reset the engine would think an animation was still in
+      // flight and route every subsequent step transition through
+      // resolveToSlide instead of animateToSlide — silencing all per-step
+      // animations for the rest of the session.
+      animating = false;
     }
   }
 
