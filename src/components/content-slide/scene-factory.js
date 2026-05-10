@@ -233,35 +233,39 @@ export function createContentSlide(title, slides, opts = {}) {
     return step.length > 0 && step[step.length - 1].type === 'bullets';
   }
 
-  function isSoloImageRowStep(step) {
-    return step.length === 1 && step[0].type === 'image-row';
+  function stepEndsInImageRow(step) {
+    return step.length > 0 && step[step.length - 1].type === 'image-row';
   }
 
-  // Find the end (exclusive) of a contiguous run of solo-image-row steps
-  // starting at startIdx. Used to merge `+++`-separated image-only paragraphs
-  // into one <figure> with per-image step-gated visibility.
+  // Find the end (exclusive) of a contiguous image-row run starting at
+  // startIdx. The run continues through subsequent steps that contain a
+  // single image-row block flagged `continuation: true`. Used to collapse
+  // `+++`-separated image-only paragraphs into one <figure> with per-image
+  // step-gated visibility.
   function imageRunEnd(slideSteps, startIdx) {
     let end = startIdx + 1;
-    while (end < slideSteps.length && isSoloImageRowStep(slideSteps[end])) {
+    while (end < slideSteps.length
+           && slideSteps[end].length === 1
+           && slideSteps[end][0].type === 'image-row'
+           && slideSteps[end][0].continuation) {
       end++;
     }
     return end;
   }
 
-  // Render a run of consecutive solo-image-row steps as a single <figure>.
-  // Each step contributes its image(s) to the merged row, tagged with the
-  // step at which they should become visible. The figure is wrapped in a
-  // `${id}-block` slot that's always-visible; visibility within the figure
-  // is per-<img> via `data-visible-from-step` and the renderer's class
-  // toggles. This gives the "build a row left-to-right" UX without
-  // disturbing the slot's geometry between reveals.
+  // Render an image-row run as a single <figure>. The startIdx step's
+  // *trailing* image-row contributes its images at step startIdx; each
+  // continuation step contributes at its own step index. Leading blocks of
+  // the startIdx step (e.g. a heading) are rendered separately by the
+  // caller so the row layout isn't disturbed by them.
   function renderImageRun(slideSteps, startIdx, endIdx, stepIndex, animated) {
     const slot = document.createElement('div');
     slot.className = `${id}-block visible`;
 
     const merged = [];
     for (let s = startIdx; s < endIdx; s++) {
-      const block = slideSteps[s][0];
+      const step = slideSteps[s];
+      const block = (s === startIdx) ? step[step.length - 1] : step[0];
       for (const image of block.images) {
         merged.push({ ...image, visibleFromStep: s });
       }
@@ -352,11 +356,27 @@ export function createContentSlide(title, slides, opts = {}) {
     let i = 0;
     while (i < slideSteps.length) {
       const stepBlocks = slideSteps[i];
-      if (isSoloImageRowStep(stepBlocks)) {
+      if (stepEndsInImageRow(stepBlocks)) {
         const end = imageRunEnd(slideSteps, i);
-        wrap.appendChild(renderImageRun(slideSteps, i, end, stepIndex, animated));
-        i = end;
-        continue;
+        if (end > i + 1 || stepBlocks.length === 1) {
+          // Render any leading non-image-row blocks of this step in their
+          // own slot so the figure can claim its full width below them.
+          if (stepBlocks.length > 1) {
+            const head = document.createElement('div');
+            const visible = i <= stepIndex;
+            head.className = animated
+              ? `${id}-block${visible ? ' visible' : ''}`
+              : `${id}-block${visible ? ' instant' : ''}`;
+            if (animated && visible) head.style.transitionDelay = `${i * 80}ms`;
+            for (let b = 0; b < stepBlocks.length - 1; b++) {
+              head.appendChild(renderBlock(stepBlocks[b]));
+            }
+            wrap.appendChild(head);
+          }
+          wrap.appendChild(renderImageRun(slideSteps, i, end, stepIndex, animated));
+          i = end;
+          continue;
+        }
       }
       if (stepEndsInBullets(stepBlocks)) {
         const end = bulletRunEnd(slideSteps, i);

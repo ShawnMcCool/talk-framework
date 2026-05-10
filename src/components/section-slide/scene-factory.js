@@ -85,12 +85,21 @@ export function createSectionSlide(title, {
       transform: scaleX(0); transform-origin: center;
     `;
 
+    // Cap the rendered font-size so long titles still fit the 16:9 stage.
+    // The bold sans-serif we use averages ~0.6em per character; clamping at
+    // 90% of stage width keeps a margin around the text. The declared
+    // `fontSize` (default 9rem) wins for short titles; long titles shrink
+    // proportionally so "Part Two — Common pitfalls" no longer overflows.
+    const charBudget = Math.max(1, title.length);
+    const fitVw = (90 / (charBudget * 0.6)).toFixed(3);
+    const sizedFont = `min(${fontSize}, ${fitVw}vw)`;
+
     const titleEl = document.createElement('div');
     titleEl.style.cssText = `
       font-family: system-ui, -apple-system, sans-serif;
-      font-weight: 800; font-size: ${fontSize}; letter-spacing: -0.02em;
+      font-weight: 800; font-size: ${sizedFont}; letter-spacing: -0.02em;
       line-height: 1; color: ${textColor}; position: relative;
-      display: flex; gap: 0;
+      display: flex; gap: 0; max-width: 95%;
     `;
 
     const spans = [];

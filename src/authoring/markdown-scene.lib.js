@@ -288,9 +288,11 @@ function parseSlideBlocks(lines) {
 
     // Image-only paragraph → emit an `image-row` block instead of plain text.
     // When a `+++` between such paragraphs lands us in a fresh step whose
-    // predecessor is also a single image-row block, flag this one as a
-    // continuation so the renderer can collapse the run into one <figure>
-    // with per-image visibility.
+    // predecessor *ends* in an image-row, flag this one as a continuation.
+    // The renderer then collapses the trailing image-row of the previous
+    // step + this one (and any further continuations) into a single
+    // <figure> with per-image visibility — so leading blocks like a
+    // heading on the first step don't break the row.
     const images = parseImageOnlyParagraph(text);
     if (images) {
       if (opensStep) openStep();
@@ -299,8 +301,8 @@ function parseSlideBlocks(lines) {
       const prevStep = steps.length >= 2 ? steps[steps.length - 2] : null;
       if (newStepEmpty
           && prevStep
-          && prevStep.length === 1
-          && prevStep[0].type === 'image-row') {
+          && prevStep.length > 0
+          && prevStep[prevStep.length - 1].type === 'image-row') {
         block.continuation = true;
       }
       push(block);

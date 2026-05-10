@@ -503,14 +503,25 @@ describe('image-row blocks', () => {
     assert.equal(steps[2][0].continuation, true);
   });
 
-  it('does not flag continuation when previous step has multiple blocks', () => {
+  it('flags continuation when previous step ENDS in image-row, even with leading blocks', () => {
     const { slides } = parseMarkdownScene(
-      `---\ntitle: T\n---\n\n# heading\n\n![](a.png)\n+++ ![](b.png)\n`,
+      `---\ntitle: T\n---\n\n# heading\n\n![](a.png)\n+++ ![](b.png)\n+++ ![](c.png)\n`,
     );
     const steps = slides[0];
-    // Step 0: heading + image-row. Step 1: image-row.
+    // Step 0: heading + image-row. Step 1: image-row(continuation). Step 2: image-row(continuation).
     assert.equal(steps[0].length, 2);
-    assert.equal(steps[1].length, 1);
+    assert.equal(steps[0][1].type, 'image-row');
+    assert.equal(steps[1][0].type, 'image-row');
+    assert.equal(steps[1][0].continuation, true);
+    assert.equal(steps[2][0].type, 'image-row');
+    assert.equal(steps[2][0].continuation, true);
+  });
+
+  it('does not flag continuation when previous step ends in a non-image block', () => {
+    const { slides } = parseMarkdownScene(
+      `---\ntitle: T\n---\n\nA paragraph.\n+++ ![](b.png)\n`,
+    );
+    const steps = slides[0];
     assert.equal(steps[1][0].type, 'image-row');
     assert.equal(steps[1][0].continuation, undefined);
   });
