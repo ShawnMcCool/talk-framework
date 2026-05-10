@@ -18,6 +18,15 @@ function loadHljs() {
 }
 
 /**
+ * Kick off the highlight.js bundle load eagerly. Call once from the deck
+ * boot so the chunk arrives before the first code-fence renders, avoiding
+ * the brief flash of plain (un-highlighted) code on scene mount.
+ */
+export function prefetchHighlighter() {
+  loadHljs();
+}
+
+/**
  * Render a generic code block (any info-string that isn't claimed by a more
  * specific markdown-block component). When the language is registered with
  * highlight.js, the code is tokenized and emitted as spans with `.hljs-*`

@@ -12,6 +12,8 @@ import * as initialManifest from 'virtual:content-manifest';
 import { applyColorVars, colors as defaultColors } from './shared/colors.js';
 import { sessionState } from './shared/session-state.js';
 import { parseQuery, buildQuery } from './shared/url-position.lib.js';
+import { resolveImageUrl } from './components/image/resolve-path.lib.js';
+import { prefetchHighlighter } from './components/code-fence/render.js';
 import { createDebugOverlay } from './debug/overlay.js';
 import { createNavOverlay } from './debug/nav-overlay.js';
 
@@ -151,9 +153,37 @@ function toast(msg) {
   toastTimeout = setTimeout(() => { toastEl.style.opacity = '0'; }, 1800);
 }
 
+// Kick off lazy chunks and scene assets at boot so the first scene to use
+// them paints fully styled instead of flashing while a chunk or image is
+// still in flight. Idempotent — safe to call again on HMR rebuild.
+function prefetchDeckAssets() {
+  prefetchHighlighter();
+
+  const baseUrl = import.meta.env?.BASE_URL ?? '/';
+  const seen = new Set();
+  const IMAGE_RE = /!\[[^\]]*\]\(([^)\s]+)\)/g;
+  // currentManifest.scenes carries the raw markdown source; SCENE_SOURCES
+  // (post-compile) only has the compiled scene module.
+  for (const s of currentManifest.scenes || []) {
+    if (s.kind !== 'md' || typeof s.source !== 'string') continue;
+    for (const m of s.source.matchAll(IMAGE_RE)) {
+      const src = m[1];
+      let url;
+      try {
+        url = resolveImageUrl(src, s.folder, baseUrl);
+      } catch { continue; }
+      if (seen.has(url)) continue;
+      seen.add(url);
+      const img = new Image();
+      img.src = url;
+    }
+  }
+}
+
 function setup() {
   const sceneDefs = buildSceneDefs();
   validateScenes(sceneDefs);
+  prefetchDeckAssets();
 
   engine = createEngine({
     stage,
