@@ -5,13 +5,13 @@
 // `extrudeAnimation`, and `reverseExplodeAnimation` — swap the import
 // and the second argument to try them.
 //
-// `/@fs/` is Vite's dev-server escape hatch for importing the framework
-// from a content folder. Dev-only; that's the right scope for examples.
+// `@talk-framework/...` is a Vite path alias defined in the framework's
+// vite.config.js — it works in both `talk serve` and production builds.
 
 import {
   createTitleScene,
   zoomPunchAnimation,
-} from '/@fs/app/src/components/title-animation/index.js';
+} from '@talk-framework/components/title-animation/index.js';
 
 export const opener = createTitleScene(
   'TALK',

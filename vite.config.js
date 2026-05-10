@@ -1,5 +1,10 @@
+import { fileURLToPath } from 'node:url';
+import path from 'node:path';
+
 import { openInEditorPlugin } from './src/authoring/dev-middleware.js';
 import { contentLoaderPlugin } from './src/authoring/content-loader-plugin.js';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Relative base works everywhere: project pages (/repo/), user/org pages,
 // custom domains, and any other static host — no env detection needed.
@@ -7,6 +12,15 @@ import { contentLoaderPlugin } from './src/authoring/content-loader-plugin.js';
 // mounts the content folder at /content, which is the dev-mode default.
 export default {
   base: './',
+  // `@talk-framework/...` lets a content folder's scene.js reach into the
+  // framework via a path that resolves identically in dev and production
+  // builds. The older `/@fs/app/src/...` pattern works only under the dev
+  // server; using the alias here means JS-authored scenes are deployable.
+  resolve: {
+    alias: {
+      '@talk-framework': path.resolve(__dirname, 'src'),
+    },
+  },
   plugins: [
     contentLoaderPlugin({ contentRoot: process.env.CONTENT_DIR || '/content' }),
     openInEditorPlugin(),

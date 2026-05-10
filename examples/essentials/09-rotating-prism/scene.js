@@ -5,9 +5,9 @@
 // helper that handles cancellation when the user skips ahead, so each step
 // is just an absolute target.
 
-import * as THREE from '/@fs/app/node_modules/three/build/three.module.js';
-import { create3DScene } from '/@fs/app/src/components/3d-scene/scene-factory.js';
-import { colors } from '/@fs/app/src/shared/colors.js';
+import * as THREE from 'three';
+import { create3DScene } from '@talk-framework/components/3d-scene/scene-factory.js';
+import { colors } from '@talk-framework/shared/colors.js';
 
 export const rotatingPrism = create3DScene({
   title: '3D in a deck',

@@ -3,8 +3,8 @@
 // main memory at 100 ns fills the whole chart. The point lands when the
 // last bar animates in.
 
-import { createSvgScene } from '/@fs/app/src/components/svg-scene/scene-factory.js';
-import { colors } from '/@fs/app/src/shared/colors.js';
+import { createSvgScene } from '@talk-framework/components/svg-scene/scene-factory.js';
+import { colors } from '@talk-framework/shared/colors.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
