@@ -11,6 +11,7 @@ import * as initialManifest from 'virtual:content-manifest';
 
 import { applyColorVars, colors as defaultColors } from './shared/colors.js';
 import { sessionState } from './shared/session-state.js';
+import { parseQuery, buildQuery } from './shared/url-position.lib.js';
 import { createDebugOverlay } from './debug/overlay.js';
 import { createNavOverlay } from './debug/nav-overlay.js';
 
@@ -111,6 +112,7 @@ let palette = null;
 let debug = null;
 let nav = null;
 let authoringKeyHandler = null;
+let popstateHandler = null;
 
 function buildSceneDefs() {
   return SCENE_SOURCES.map(s => s.scene);
@@ -158,6 +160,7 @@ function setup() {
     sceneDefs,
     onPositionChange: (p) => {
       sessionState.setPosition(deckId, p);
+      syncUrlToPosition(p);
       if (debug) debug.refresh();
       if (nav) nav.refresh();
     },
@@ -278,10 +281,21 @@ function setup() {
 
   engine.start();
 
-  // Restore last position (if any). Scoped to the current deck by `deckId`
-  // so loading a different talk folder starts fresh. Clamped against the
-  // current deck shape in case scenes were added/removed since the save.
-  const saved = sessionState.getPosition(deckId);
+  // Restore last position. Precedence: URL `?p=…` > localStorage > scene 0.
+  // URL state lets you share deep links and survives a cleared profile;
+  // localStorage continues to back up the URL so a fresh tab without a
+  // query still resumes where you left off. Scoped to the current deck by
+  // `deckId` and clamped against the current deck shape so renames /
+  // removals don't carry stale coordinates.
+  const fromUrl = parseQuery(window.location.search);
+  let resolved = null;
+  if (fromUrl) {
+    const idx = SCENE_SOURCES.findIndex(s => s.folder === fromUrl.folder);
+    if (idx >= 0) {
+      resolved = { sceneIndex: idx, slideIndex: fromUrl.slideIndex, stepIndex: fromUrl.stepIndex };
+    }
+  }
+  const saved = resolved || sessionState.getPosition(deckId);
   if (saved) {
     const scene = sceneDefs[saved.sceneIndex];
     if (scene) {
@@ -289,6 +303,19 @@ function setup() {
       engine.goToSlide?.(saved.slideIndex, saved.stepIndex);
     }
   }
+
+  // Browser back/forward: re-navigate to whatever the URL now describes.
+  // `replaceState` (used in onPositionChange) doesn't trigger popstate, so
+  // there's no echo loop — only true user-driven history movement fires.
+  popstateHandler = () => {
+    const fromUrl = parseQuery(window.location.search);
+    if (!fromUrl) return;
+    const idx = SCENE_SOURCES.findIndex(s => s.folder === fromUrl.folder);
+    if (idx < 0) return;
+    engine.goToScene(idx);
+    engine.goToSlide?.(fromUrl.slideIndex, fromUrl.stepIndex);
+  };
+  window.addEventListener('popstate', popstateHandler);
 
   // Force overlays to re-read the new deck/position snapshot after setup.
   debug.refresh();
@@ -304,6 +331,19 @@ function teardown() {
   if (nav) nav.destroy();
   if (authoringKeyHandler) document.removeEventListener('keydown', authoringKeyHandler);
   authoringKeyHandler = null;
+  if (popstateHandler) window.removeEventListener('popstate', popstateHandler);
+  popstateHandler = null;
+}
+
+function syncUrlToPosition(p) {
+  const folder = SCENE_SOURCES[p.sceneIndex]?.folder;
+  const qs = folder
+    ? buildQuery({ folder, slideIndex: p.slideIndex, stepIndex: p.stepIndex })
+    : '';
+  const url = qs
+    ? `${window.location.pathname}${qs}${window.location.hash}`
+    : `${window.location.pathname}${window.location.hash}`;
+  window.history.replaceState({}, '', url);
 }
 
 setup();
